@@ -26,8 +26,14 @@ export function movingAvg(arr: number[], window: number): number[] {
     const start = Math.max(0, i - Math.floor(window / 2))
     const end = Math.min(arr.length, i + Math.floor(window / 2) + 1)
     const slice = arr.slice(start, end)
+    
+    if (slice.length === 0) {
+      result.push(0)
+      continue
+    }
+    
     const avg = slice.reduce((sum, val) => sum + val, 0) / slice.length
-    result.push(avg)
+    result.push(isFinite(avg) ? avg : 0)
   }
   return result
 }
@@ -43,8 +49,14 @@ export function meanDuplicate(duplicates: number[][]): number[] {
   
   for (let i = 0; i < length; i++) {
     const values = duplicates.map(dup => dup[i]).filter(isFinite)
+    
+    if (values.length === 0) {
+      result.push(0)
+      continue
+    }
+    
     const mean = values.reduce((sum, val) => sum + val, 0) / values.length
-    result.push(mean)
+    result.push(isFinite(mean) ? mean : 0)
   }
   
   return result
@@ -60,7 +72,8 @@ export function subtractArray(data: number[], bgCtrl: number[]): number[] {
   const minLength = Math.min(data.length, bgCtrl.length)
   
   for (let i = 0; i < minLength; i++) {
-    result.push(data[i] - bgCtrl[i])
+    const diff = data[i] - bgCtrl[i]
+    result.push(isFinite(diff) ? diff : 0)
   }
   
   return result
@@ -77,38 +90,58 @@ export function normaliseAlexa(data: number[][], alexa0: number, alexa100: numbe
   
   if (range === 0) return mean
   
-  return mean.map(value => ((value - alexa0) / range) * 100)
+  return mean.map(value => {
+    const normalized = ((value - alexa0) / range) * 100
+    return isFinite(normalized) ? normalized : 0
+  })
 }
 
 /**
  * Calculate T2943 - tPA Catalytic Rate
  */
 export function calcT2943(duplicate: number[][], window: number): number {
-  const mean = meanDuplicate(duplicate)
-  const dAbs = diffArray(mean, 1)
-  const smooth = movingAvg(dAbs, window)
+  if (duplicate.length === 0 || window <= 0) return 0
   
+  const mean = meanDuplicate(duplicate)
+  if (mean.length === 0) return 0
+  
+  const dAbs = diffArray(mean, 1)
+  if (dAbs.length === 0) return 0
+  
+  const smooth = movingAvg(dAbs, window)
   if (smooth.length === 0) return 0
-  return Math.max(...smooth)
+  
+  const maxVal = Math.max(...smooth)
+  return isFinite(maxVal) ? maxVal : 0
 }
 
 /**
  * Calculate S2251 - Plasmin Generation Rate
  */
 export function calcS2251(duplicate: number[][], bgCtrl: number[], window: number): number {
-  const mean = meanDuplicate(duplicate)
-  const dAbs = diffArray(mean, 1)
-  const smooth = movingAvg(dAbs, window)
-  const net = subtractArray(smooth, bgCtrl)
+  if (duplicate.length === 0 || bgCtrl.length === 0 || window <= 0) return 0
   
+  const mean = meanDuplicate(duplicate)
+  if (mean.length === 0) return 0
+  
+  const dAbs = diffArray(mean, 1)
+  if (dAbs.length === 0) return 0
+  
+  const smooth = movingAvg(dAbs, window)
+  if (smooth.length === 0) return 0
+  
+  const net = subtractArray(smooth, bgCtrl)
   if (net.length === 0) return 0
   
   const mlr = Math.max(...net)
-  const tmlr = net.indexOf(mlr)
-  const lr0 = net[0]
+  if (!isFinite(mlr)) return 0
   
-  if (tmlr === 0) return 0
-  return (mlr - lr0) / tmlr
+  const tmlr = net.indexOf(mlr)
+  if (tmlr <= 0) return 0
+  
+  const lr0 = net[0] || 0
+  const result = (mlr - lr0) / tmlr
+  return isFinite(result) ? result : 0
 }
 
 /**
@@ -124,13 +157,24 @@ export function calcHoFF(options: {
 }): number {
   const { duplicate, bgCtrl, metric, window, alexa0, alexa100 } = options
   
-  const norm = normaliseAlexa(duplicate, alexa0, alexa100)
-  const hlt = norm.findIndex((v) => v >= 50)
-  const net = subtractArray(movingAvg(diffArray(norm, 1), window), bgCtrl)
+  if (duplicate.length === 0 || bgCtrl.length === 0 || window <= 0) return 0
   
+  const norm = normaliseAlexa(duplicate, alexa0, alexa100)
+  if (norm.length === 0) return 0
+  
+  const hlt = norm.findIndex((v) => v >= 50)
+  const dAbs = diffArray(norm, 1)
+  if (dAbs.length === 0) return 0
+  
+  const smooth = movingAvg(dAbs, window)
+  if (smooth.length === 0) return 0
+  
+  const net = subtractArray(smooth, bgCtrl)
   if (net.length === 0) return 0
   
   const mlr = Math.max(...net)
+  if (!isFinite(mlr)) return 0
+  
   const tmlr = net.indexOf(mlr)
   const fi = tmlr > 0 ? mlr / tmlr : 0
   
@@ -142,7 +186,7 @@ export function calcHoFF(options: {
     case 'TMLR':
       return tmlr >= 0 ? tmlr : -1
     case 'FI':
-      return fi
+      return isFinite(fi) ? fi : 0
     default:
       return 0
   }
