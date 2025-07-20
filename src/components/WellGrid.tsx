@@ -2,7 +2,7 @@ import React from 'react'
 
 interface WellGridProps {
   selected: Set<string>
-  onChange: (wellId: string) => void
+  onChange: (wellId: string) => void // eslint-disable-line @typescript-eslint/no-unused-vars
   mode?: 'wells' | 'control0' | 'control100'
   disabled?: boolean
 }
