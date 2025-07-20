@@ -13,7 +13,10 @@
     "test:coverage": "vitest --coverage",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "ci-local": "./ci-local.sh",
+    "quick-check": "./quick-check.sh",
+    "last-fail": "./last-fail.sh"
   },
   "dependencies": {
     "react": "^18.2.0",

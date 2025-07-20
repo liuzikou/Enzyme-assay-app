@@ -42,25 +42,25 @@ export interface AppState {
 
 export interface AppActions {
   // Assay configuration
-  setAssayType: (type: AssayType) => void // eslint-disable-line @typescript-eslint/no-unused-vars
-  setTimeRange: (range: [number, number]) => void // eslint-disable-line @typescript-eslint/no-unused-vars
-  setSmoothingWindow: (window: number) => void // eslint-disable-line @typescript-eslint/no-unused-vars
-  setHoffMetric: (metric: HoFFMetric) => void // eslint-disable-line @typescript-eslint/no-unused-vars
+  setAssayType: (type: AssayType) => void
+  setTimeRange: (range: [number, number]) => void
+  setSmoothingWindow: (window: number) => void
+  setHoffMetric: (metric: HoFFMetric) => void
   
   // Data management
-  setRawData: (data: WellData[]) => void // eslint-disable-line @typescript-eslint/no-unused-vars
-  setSelectedWells: (wells: Set<string>) => void // eslint-disable-line @typescript-eslint/no-unused-vars
-  setControl0Wells: (wells: Set<string>) => void // eslint-disable-line @typescript-eslint/no-unused-vars
-  setControl100Wells: (wells: Set<string>) => void // eslint-disable-line @typescript-eslint/no-unused-vars
+  setRawData: (data: WellData[]) => void
+  setSelectedWells: (wells: Set<string>) => void
+  setControl0Wells: (wells: Set<string>) => void
+  setControl100Wells: (wells: Set<string>) => void
   
   // Results
-  setResults: (results: AssayResult[]) => void // eslint-disable-line @typescript-eslint/no-unused-vars
-  setLoading: (loading: boolean) => void // eslint-disable-line @typescript-eslint/no-unused-vars
-  setErrors: (errors: string[]) => void // eslint-disable-line @typescript-eslint/no-unused-vars
+  setResults: (results: AssayResult[]) => void
+  setLoading: (loading: boolean) => void
+  setErrors: (errors: string[]) => void
   
   // UI state
-  setShowWellSelector: (show: boolean) => void // eslint-disable-line @typescript-eslint/no-unused-vars
-  setShowControlSelector: (show: boolean) => void // eslint-disable-line @typescript-eslint/no-unused-vars
+  setShowWellSelector: (show: boolean) => void
+  setShowControlSelector: (show: boolean) => void
   
   // Actions
   calculate: () => void
@@ -144,14 +144,15 @@ export const useAssayStore = create<AppStore>((set, get) => ({
           let value = 0
           
           switch (state.assayType) {
-            case 'T2943':
+            case 'T2943': {
               // For T2943, we need duplicate measurements
               // For now, we'll use the single measurement as duplicate
               const duplicateT2943 = [wellData.timePoints, wellData.timePoints]
               value = calcT2943(duplicateT2943, state.smoothingWindow)
               break
+            }
               
-            case 'S2251':
+            case 'S2251': {
               // For S2251, we need background control
               if (state.control0Wells.size === 0) {
                 throw new Error('No control wells selected for S2251')
@@ -171,8 +172,9 @@ export const useAssayStore = create<AppStore>((set, get) => ({
               const duplicateS2251 = [wellData.timePoints, wellData.timePoints]
               value = calcS2251(duplicateS2251, bgCtrlS2251, state.smoothingWindow)
               break
+            }
               
-            case 'HoFF':
+            case 'HoFF': {
               // For HoFF, we need both control types
               if (state.control0Wells.size === 0 || state.control100Wells.size === 0) {
                 throw new Error('Both 0% and 100% control wells required for HoFF')
@@ -205,6 +207,7 @@ export const useAssayStore = create<AppStore>((set, get) => ({
                 alexa100
               })
               break
+            }
           }
           
           results.push({

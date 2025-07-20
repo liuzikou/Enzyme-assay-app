@@ -120,10 +120,24 @@ H12,0.1,0.2,0.3,0.4
 
 ## Development
 
-- **Type checking**: `pnpm type-check`
-- **Linting**: `pnpm lint`
-- **Formatting**: `pnpm format`
-- **Test coverage**: `pnpm test:coverage`
+### Code Quality
+- **Type checking**: `npm run type-check`
+- **Linting**: `npm run lint`
+- **Formatting**: `npm run format`
+- **Test coverage**: `npm run test:coverage`
+
+### Local CI/CD Tools
+- **Full validation**: `npm run ci-local` - Run complete CI pipeline locally
+- **Quick validation**: `npm run quick-check` - Fast type-check + lint validation
+- **Failure analysis**: `npm run last-fail` - Analyze recent failures and provide diagnostics
+
+### Pre-push Validation
+The project includes a pre-push hook that automatically runs validation before pushing. If validation fails, the push will be blocked.
+
+To bypass the pre-push check (not recommended):
+```bash
+git push --no-verify
+```
 
 ## Testing
 
