@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { Sparkline } from './Sparkline'
 import { useAssayStore } from '../features/hooks'
 
