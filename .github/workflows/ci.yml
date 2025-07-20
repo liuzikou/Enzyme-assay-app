@@ -19,25 +19,20 @@ jobs:
         node-version: '18'
         cache: 'npm'
     
-    - name: Install pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 8
-    
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: npm ci
     
     - name: Run tests
-      run: pnpm test
+      run: npm test
     
     - name: Run type check
-      run: pnpm type-check
+      run: npm run type-check
     
     - name: Run linting
-      run: pnpm lint
+      run: npm run lint
     
     - name: Build
-      run: pnpm build
+      run: npm run build
 
   deploy:
     needs: test
@@ -53,16 +48,11 @@ jobs:
         node-version: '18'
         cache: 'npm'
     
-    - name: Install pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 8
-    
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: npm ci
     
     - name: Build
-      run: pnpm build
+      run: npm run build
     
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
