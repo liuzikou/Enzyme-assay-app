@@ -20,54 +20,54 @@ export const ResultsTable: React.FC = () => {
   const { results, assayType, hoffMetric } = useAssayStore()
   const [sorting, setSorting] = React.useState<SortingState>([])
 
-  const getMetricColumnName = () => {
-    switch (assayType) {
-      case 'T2943':
-        return 'Catalytic Rate'
-      case 'S2251':
-        return 'Generation Rate'
-      case 'HoFF':
-        return hoffMetric
-      default:
-        return 'Value'
-    }
-  }
-
-  const columns = useMemo(() => [
-    columnHelper.accessor('wellId', {
-      header: 'Well ID',
-      cell: info => (
-        <span className="font-medium text-gray-900">
-          {info.getValue()}
-        </span>
-      )
-    }),
-    columnHelper.accessor('value', {
-      header: getMetricColumnName(),
-      cell: info => {
-        const value = info.getValue()
-        const isValid = info.row.original.isValid
-        
-        return (
-          <span className={`${isValid ? 'text-gray-900' : 'text-red-600'}`}>
-            {isValid ? value.toFixed(4) : 'Invalid'}
+  const columns = useMemo(() => {
+    return [
+      columnHelper.accessor('wellId', {
+        header: 'Well ID',
+        cell: info => (
+          <span className="font-medium text-gray-900">
+            {info.getValue()}
           </span>
         )
-      }
-    }),
-    columnHelper.accessor('isValid', {
-      header: 'Status',
-      cell: info => (
-        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-          info.getValue() 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-red-100 text-red-800'
-        }`}>
-          {info.getValue() ? 'Valid' : 'Invalid'}
-        </span>
-      )
-    })
-  ], [assayType, hoffMetric])
+      }),
+      columnHelper.accessor('value', {
+        header: () => {
+          switch (assayType) {
+            case 'T2943':
+              return 'Catalytic Rate'
+            case 'S2251':
+              return 'Generation Rate'
+            case 'HoFF':
+              return hoffMetric
+            default:
+              return 'Value'
+          }
+        },
+        cell: info => {
+          const value = info.getValue()
+          const isValid = info.row.original.isValid
+          
+          return (
+            <span className={`${isValid ? 'text-gray-900' : 'text-red-600'}`}>
+              {isValid ? value.toFixed(4) : 'Invalid'}
+            </span>
+          )
+        }
+      }),
+      columnHelper.accessor('isValid', {
+        header: 'Status',
+        cell: info => (
+          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+            info.getValue() 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {info.getValue() ? 'Valid' : 'Invalid'}
+          </span>
+        )
+      })
+    ]
+  }, [assayType, hoffMetric])
 
   const table = useReactTable({
     data: results,
