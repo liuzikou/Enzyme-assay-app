@@ -1,0 +1,115 @@
+import React, { useMemo } from 'react'
+import { Sparkline } from './Sparkline'
+import { useAssayStore } from '../features/hooks'
+
+export const PlotArea: React.FC = () => {
+  const { rawData, selectedWells, results } = useAssayStore()
+
+  // Calculate shared Y domain for consistent scaling
+  const yDomain = useMemo(() => {
+    if (rawData.length === 0) return [0, 1]
+    
+    const allValues = rawData.flatMap(well => well.timePoints)
+    const min = Math.min(...allValues)
+    const max = Math.max(...allValues)
+    const padding = (max - min) * 0.1
+    
+    return [min - padding, max + padding]
+  }, [rawData])
+
+  const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+  const cols = Array.from({ length: 12 }, (_, i) => i + 1)
+
+  const getWellData = (wellId: string) => {
+    return rawData.find(well => well.wellId === wellId)?.timePoints || []
+  }
+
+  const getWellColor = (wellId: string) => {
+    const result = results.find(r => r.wellId === wellId)
+    if (result && !result.isValid) return '#ef4444' // red for invalid
+    if (selectedWells.has(wellId)) return '#2258cf' // accent for selected
+    return '#6b7280' // gray for unselected
+  }
+
+  const handleWellClick = (wellId: string) => {
+    // TODO: Implement well selection toggle
+    console.log('Clicked well:', wellId)
+  }
+
+  if (rawData.length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Time Series Plots</h3>
+        <div className="text-center py-8 text-gray-500">
+          <p>No data available. Paste CSV data to see plots.</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium text-gray-900">Time Series Plots</h3>
+        <div className="text-sm text-gray-600">
+          {selectedWells.size} wells selected
+        </div>
+      </div>
+
+      <div className="grid grid-cols-13 gap-1">
+        {/* Column headers */}
+        <div className="h-8"></div>
+        {cols.map(col => (
+          <div key={col} className="h-8 flex items-center justify-center text-xs font-medium text-gray-500">
+            {col}
+          </div>
+        ))}
+        
+        {/* Row headers and sparklines */}
+        {rows.map(row => (
+          <React.Fragment key={row}>
+            <div className="h-10 flex items-center justify-center text-xs font-medium text-gray-500">
+              {row}
+            </div>
+            {cols.map(col => {
+              const wellId = `${row}${col}`
+              const data = getWellData(wellId)
+              const color = getWellColor(wellId)
+              const isSelected = selectedWells.has(wellId)
+              
+              return (
+                <div key={wellId} className="h-10 flex items-center justify-center">
+                  <Sparkline
+                    data={data}
+                    width={60}
+                    height={30}
+                    color={color}
+                    isSelected={isSelected}
+                    onClick={() => handleWellClick(wellId)}
+                  />
+                </div>
+              )
+            })}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div className="mt-4 text-xs text-gray-600 space-y-1">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-1">
+            <div className="w-3 h-3 bg-accent rounded"></div>
+            <span>Selected</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-3 h-3 bg-gray-400 rounded"></div>
+            <span>Unselected</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-3 h-3 bg-red-500 rounded"></div>
+            <span>Invalid</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+} 
