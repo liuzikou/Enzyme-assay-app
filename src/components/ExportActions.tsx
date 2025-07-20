@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx'
 import { useAssayStore } from '../features/hooks'
 
 export const ExportActions: React.FC = () => {
-  const { results, assayType, hoffMetric, rawData } = useAssayStore()
+  const { results, assayType, rawData } = useAssayStore()
 
   const exportToCSV = () => {
     if (results.length === 0) return
@@ -26,7 +26,7 @@ export const ExportActions: React.FC = () => {
   const exportToXLSX = () => {
     if (results.length === 0) return
 
-    const worksheet = XLSX.utils.jsonToSheet(
+    const worksheet = XLSX.utils.json_to_sheet(
       results.map(result => ({
         'Well ID': result.wellId,
         'Value': result.isValid ? result.value : 'Invalid',
@@ -52,7 +52,7 @@ export const ExportActions: React.FC = () => {
         { Metric: 'Max', Value: Math.max(...validResults.map(r => r.value)).toFixed(4) }
       ]
       
-      const summarySheet = XLSX.utils.jsonToSheet(summaryData)
+      const summarySheet = XLSX.utils.json_to_sheet(summaryData)
       XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary')
     }
 

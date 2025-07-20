@@ -9,10 +9,6 @@ export const PasteTable: React.FC = () => {
     const lines = text.trim().split('\n')
     if (lines.length === 0) return []
 
-    // Parse header to get time points
-    const header = lines[0].split(',').map(s => s.trim())
-    const timePoints = header.slice(1).map((_, index) => index) // Use index as time point
-
     // Parse data rows
     const wells: WellData[] = []
     

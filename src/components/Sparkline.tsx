@@ -62,7 +62,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
                 return (
                   <div className="bg-white border border-gray-200 rounded shadow-lg p-2 text-xs">
                     <p>Time: {payload[0].payload.time}</p>
-                    <p>Value: {payload[0].value?.toFixed(3)}</p>
+                    <p>Value: {(payload[0].value as number)?.toFixed(3)}</p>
                   </div>
                 )
               }

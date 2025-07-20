@@ -8,7 +8,7 @@ import {
   createColumnHelper,
   SortingState
 } from '@tanstack/react-table'
-import { useAssayStore, AssayType } from '../features/hooks'
+import { useAssayStore } from '../features/hooks'
 
 const columnHelper = createColumnHelper<{
   wellId: string

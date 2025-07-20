@@ -5,18 +5,6 @@ import { useAssayStore } from '../features/hooks'
 export const PlotArea: React.FC = () => {
   const { rawData, selectedWells, results } = useAssayStore()
 
-  // Calculate shared Y domain for consistent scaling
-  const yDomain = useMemo(() => {
-    if (rawData.length === 0) return [0, 1]
-    
-    const allValues = rawData.flatMap(well => well.timePoints)
-    const min = Math.min(...allValues)
-    const max = Math.max(...allValues)
-    const padding = (max - min) * 0.1
-    
-    return [min - padding, max + padding]
-  }, [rawData])
-
   const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
   const cols = Array.from({ length: 12 }, (_, i) => i + 1)
 
