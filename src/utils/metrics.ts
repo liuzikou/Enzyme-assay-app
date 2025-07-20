@@ -84,17 +84,19 @@ export function normaliseAlexa(data: number[][], alexa0: number, alexa100: numbe
  * Calculate T2943 - tPA Catalytic Rate
  */
 export function calcT2943(duplicate: number[][], window: number): number {
-  const dAbs = diffArray(duplicate, 1)
+  const mean = meanDuplicate(duplicate)
+  const dAbs = diffArray(mean, 1)
   const smooth = movingAvg(dAbs, window)
-  const mean = meanDuplicate(smooth)
-  return Math.max(...mean)
+  return Math.max(...smooth)
 }
 
 /**
  * Calculate S2251 - Plasmin Generation Rate
  */
 export function calcS2251(duplicate: number[][], bgCtrl: number[], window: number): number {
-  const smooth = movingAvg(diffArray(duplicate, 1), window)
+  const mean = meanDuplicate(duplicate)
+  const dAbs = diffArray(mean, 1)
+  const smooth = movingAvg(dAbs, window)
   const net = subtractArray(smooth, bgCtrl)
   const mlr = Math.max(...net)
   const tmlr = net.indexOf(mlr)
