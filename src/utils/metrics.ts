@@ -87,6 +87,8 @@ export function calcT2943(duplicate: number[][], window: number): number {
   const mean = meanDuplicate(duplicate)
   const dAbs = diffArray(mean, 1)
   const smooth = movingAvg(dAbs, window)
+  
+  if (smooth.length === 0) return 0
   return Math.max(...smooth)
 }
 
@@ -98,6 +100,9 @@ export function calcS2251(duplicate: number[][], bgCtrl: number[], window: numbe
   const dAbs = diffArray(mean, 1)
   const smooth = movingAvg(dAbs, window)
   const net = subtractArray(smooth, bgCtrl)
+  
+  if (net.length === 0) return 0
+  
   const mlr = Math.max(...net)
   const tmlr = net.indexOf(mlr)
   const lr0 = net[0]
@@ -122,6 +127,9 @@ export function calcHoFF(options: {
   const norm = normaliseAlexa(duplicate, alexa0, alexa100)
   const hlt = norm.findIndex((v) => v >= 50)
   const net = subtractArray(movingAvg(diffArray(norm, 1), window), bgCtrl)
+  
+  if (net.length === 0) return 0
+  
   const mlr = Math.max(...net)
   const tmlr = net.indexOf(mlr)
   const fi = tmlr > 0 ? mlr / tmlr : 0
