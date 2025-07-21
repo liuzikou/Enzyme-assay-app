@@ -2,56 +2,65 @@ import React, { useState, useCallback } from 'react'
 import { useAssayStore, WellData } from '../features/hooks'
 
 export const PasteTable: React.FC = () => {
-  const { rawData, setRawData, setErrors } = useAssayStore()
+  const { rawData, setRawData, setErrors, setSelectedWells } = useAssayStore()
   const [pasteText, setPasteText] = useState('')
 
+  // 支持多分隔符：逗号、空格、Tab、中文逗号
   const parseCSVData = useCallback((text: string): WellData[] => {
     const lines = text.trim().split('\n')
     if (lines.length === 0) return []
 
     // Parse data rows
     const wells: WellData[] = []
-    
+    const errors: string[] = []
     for (let i = 1; i < lines.length && i <= 96; i++) {
-      const line = lines[i].split(',').map(s => s.trim())
+      // 支持多分隔符
+      const line = lines[i].split(/[\s,，\t]+/).map(s => s.trim())
       const wellId = line[0]
-      
-      if (!wellId || !/^[A-H][1-9]|1[0-2]$/.test(wellId)) {
+      if (!wellId || !/^[A-H](?:[1-9]|1[0-2])$/.test(wellId)) {
+        errors.push(`Invalid Well ID at line ${i + 1}: ${wellId}`)
         continue
       }
-
+      if (line.length < 2) {
+        errors.push(`No data for well ${wellId} at line ${i + 1}`)
+        continue
+      }
       const values = line.slice(1).map(val => {
         const num = parseFloat(val)
         return isNaN(num) ? 0 : num
       })
-
       wells.push({
         wellId,
         timePoints: values
       })
     }
-
+    if (errors.length > 0) {
+      throw new Error(errors.join('; '))
+    }
     return wells
   }, [])
 
   const handlePaste = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value
     setPasteText(text)
-    
     try {
       const wells = parseCSVData(text)
       setRawData(wells)
+      setSelectedWells(new Set(wells.map(w => w.wellId))) // 自动选中有数据的孔
       setErrors([])
     } catch (error) {
-      setErrors(['Invalid CSV format. Please check your data.'])
+      setRawData([])
+      setSelectedWells(new Set())
+      setErrors([error instanceof Error ? error.message : 'Invalid CSV format. Please check your data.'])
     }
-  }, [parseCSVData, setRawData, setErrors])
+  }, [parseCSVData, setRawData, setErrors, setSelectedWells])
 
   const handleClear = useCallback(() => {
     setPasteText('')
     setRawData([])
+    setSelectedWells(new Set())
     setErrors([])
-  }, [setRawData, setErrors])
+  }, [setRawData, setErrors, setSelectedWells])
 
   return (
     <div className="space-y-4">
@@ -62,7 +71,7 @@ export const PasteTable: React.FC = () => {
         <textarea
           value={pasteText}
           onChange={handlePaste}
-          placeholder="Paste your CSV data here... First column should be Well ID (A1-H12), followed by time columns"
+          placeholder="Paste your CSV data here... First column should be Well ID (A1-H12), followed by time columns. Supports comma, space, tab, and Chinese comma as separators."
           className="input-field h-32 resize-none"
         />
       </div>
@@ -80,6 +89,15 @@ export const PasteTable: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* 错误提示 */}
+      {Array.isArray(useAssayStore.getState().errors) && useAssayStore.getState().errors.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+          {useAssayStore.getState().errors.map((err, idx) => (
+            <div key={idx}>{err}</div>
+          ))}
+        </div>
+      )}
 
       {rawData.length > 0 && (
         <div className="bg-gray-50 rounded-lg p-4">
