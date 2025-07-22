@@ -2,7 +2,7 @@ import React from 'react'
 import { AppHeader } from '../components/AppHeader'
 import { InputPanel } from '../components/InputPanel'
 import { PlotArea } from '../components/PlotArea'
-import { ResultsTable } from '../components/ResultsTable'
+import PlateResultsGrid from '../components/PlateResultsGrid'
 import { ExportActions } from '../components/ExportActions'
 import { useAssayStore } from '../features/hooks'
 
@@ -40,7 +40,7 @@ export const HomePage: React.FC = () => {
             {rawData.length > 0 && <PlotArea />}
             
             {/* Results Table */}
-            {results.length > 0 && <ResultsTable />}
+            {results.length > 0 && <PlateResultsGrid />}
             
             {/* Export Actions */}
             {(results.length > 0 || rawData.length > 0) && <ExportActions />}

@@ -9,13 +9,12 @@ export const ExportActions: React.FC = () => {
   const exportToCSV = () => {
     if (results.length === 0) return
 
-    const headers = ['Well ID', 'Value', 'Status']
+    const headers = ['Well ID', 'Value']
     const csvContent = [
       headers.join(','),
       ...results.map(result => [
         result.wellId,
-        result.isValid ? result.value.toFixed(4) : 'Invalid',
-        result.isValid ? 'Valid' : 'Invalid'
+        result.isValid ? result.value.toFixed(4) : 'Invalid'
       ].join(','))
     ].join('\n')
 
@@ -29,32 +28,12 @@ export const ExportActions: React.FC = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       results.map(result => ({
         'Well ID': result.wellId,
-        'Value': result.isValid ? result.value : 'Invalid',
-        'Status': result.isValid ? 'Valid' : 'Invalid'
+        'Value': result.isValid ? result.value : 'Invalid'
       }))
     )
 
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Results')
-    
-    // Add summary sheet
-    const validResults = results.filter(r => r.isValid)
-    if (validResults.length > 0) {
-      const mean = validResults.reduce((sum, r) => sum + r.value, 0) / validResults.length
-      const variance = validResults.reduce((sum, r) => sum + Math.pow(r.value - mean, 2), 0) / validResults.length
-      const stdDev = Math.sqrt(variance)
-      
-      const summaryData = [
-        { Metric: 'Count', Value: validResults.length },
-        { Metric: 'Mean', Value: mean.toFixed(4) },
-        { Metric: 'Std Dev', Value: stdDev.toFixed(4) },
-        { Metric: 'Min', Value: Math.min(...validResults.map(r => r.value)).toFixed(4) },
-        { Metric: 'Max', Value: Math.max(...validResults.map(r => r.value)).toFixed(4) }
-      ]
-      
-      const summarySheet = XLSX.utils.json_to_sheet(summaryData)
-      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary')
-    }
 
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
@@ -122,7 +101,7 @@ export const ExportActions: React.FC = () => {
       </div>
       
       <div className="mt-4 text-sm text-gray-600">
-        <p>• CSV/XLSX exports include results table and summary statistics</p>
+        <p>• CSV/XLSX exports include results table only (no summary statistics)</p>
         <p>• Raw data export includes all time series data</p>
         <p>• Plot export requires browser screenshot (coming soon)</p>
       </div>
