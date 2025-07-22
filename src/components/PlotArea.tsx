@@ -44,7 +44,7 @@ export const PlotArea: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-13 gap-1">
+      <div className="grid grid-cols-13 gap-0 h-[480px]">
         {/* Column headers */}
         <div className="h-8"></div>
         {cols.map(col => (
@@ -82,22 +82,7 @@ export const PlotArea: React.FC = () => {
         ))}
       </div>
 
-      <div className="mt-4 text-xs text-gray-600 space-y-1">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 bg-accent rounded"></div>
-            <span>Selected</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 bg-gray-400 rounded"></div>
-            <span>Unselected</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 bg-red-500 rounded"></div>
-            <span>Invalid</span>
-          </div>
-        </div>
-      </div>
+      {/* Legend removed */}
     </div>
   )
 } 

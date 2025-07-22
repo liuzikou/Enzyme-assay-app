@@ -6,14 +6,32 @@ const COLS = Array.from({ length: 12 }, (_, i) => i + 1);
 const ROWS = ["A","B","C","D","E","F","G","H"];
 
 const PlateResultsGrid = memo(() => {
-  // results: AssayResult[]; AssayResult = { wellId: string, value: number, isValid: boolean }
   const results = useAssayStore(s => s.results);
+  const sigDigits = useAssayStore(s => s.sigDigits);
+  const incDigits = useAssayStore(s => s.incDigits);
+  const decDigits = useAssayStore(s => s.decDigits);
   // Map results to a lookup table for O(1) access
   const resultMap = Object.fromEntries(results.map(r => [r.wellId, r.isValid ? r.value : NaN])) as Record<string, number>;
   return (
     <div className="overflow-auto">
       <table className="border-collapse">
         <thead>
+          <tr>
+            <th className="w-8 sticky left-0 bg-white"></th>
+            <th colSpan={12} className="text-right pr-2">
+              <button
+                onClick={decDigits}
+                className="px-1 mx-1 rounded bg-gray-200 hover:bg-gray-300"
+                aria-label="Decrease significant digits"
+              >−</button>
+              <button
+                onClick={incDigits}
+                className="px-1 mx-1 rounded bg-gray-200 hover:bg-gray-300"
+                aria-label="Increase significant digits"
+              >+</button>
+              <span className="ml-1 text-sm text-gray-500">{sigDigits} dp</span>
+            </th>
+          </tr>
           <tr>
             <th className="w-8 sticky left-0 bg-white"></th>
             {COLS.map(c => (
@@ -36,7 +54,7 @@ const PlateResultsGrid = memo(() => {
                       Number.isFinite(val) ? "text-gray-900" : "text-gray-400"
                     )}
                   >
-                    {Number.isFinite(val) ? val.toFixed(3) : "—"}
+                    {Number.isFinite(val) ? val.toFixed(sigDigits) : "—"}
                   </td>
                 );
               })}

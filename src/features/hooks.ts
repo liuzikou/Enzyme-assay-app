@@ -38,6 +38,8 @@ export interface AppState {
   // UI state
   showWellSelector: boolean
   showControlSelector: boolean
+  // Precision control
+  sigDigits: number
 }
 
 export interface AppActions {
@@ -65,6 +67,9 @@ export interface AppActions {
   // Actions
   calculate: () => void
   reset: () => void
+  // Precision control
+  incDigits: () => void
+  decDigits: () => void
 }
 
 export type AppStore = AppState & AppActions
@@ -96,6 +101,11 @@ export const useAssayStore = create<AppStore>((set, get) => ({
   
   showWellSelector: false,
   showControlSelector: false,
+  
+  // Precision control
+  sigDigits: 3,
+  incDigits: () => set(s => ({ sigDigits: Math.min(6, s.sigDigits + 1) })),
+  decDigits: () => set(s => ({ sigDigits: Math.max(1, s.sigDigits - 1) })),
   
   // Actions
   setAssayType: (type) => set({ assayType: type }),
