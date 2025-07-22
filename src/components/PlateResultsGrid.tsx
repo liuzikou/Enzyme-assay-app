@@ -6,7 +6,10 @@ const COLS = Array.from({ length: 12 }, (_, i) => i + 1);
 const ROWS = ["A","B","C","D","E","F","G","H"];
 
 const PlateResultsGrid = memo(() => {
-  const results = useAssayStore(s => s.results); // { [wellId]: number }
+  // results: AssayResult[]; AssayResult = { wellId: string, value: number, isValid: boolean }
+  const results = useAssayStore(s => s.results);
+  // Map results to a lookup table for O(1) access
+  const resultMap = Object.fromEntries(results.map(r => [r.wellId, r.isValid ? r.value : NaN])) as Record<string, number>;
   return (
     <div className="overflow-auto">
       <table className="border-collapse">
@@ -24,7 +27,7 @@ const PlateResultsGrid = memo(() => {
               <th className="sticky left-0 bg-white font-medium">{r}</th>
               {COLS.map(c => {
                 const id = `${r}${c}`;         // e.g. A1
-                const val = results[id];
+                const val = resultMap[id];
                 return (
                   <td
                     key={id}
