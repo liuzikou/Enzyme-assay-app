@@ -91,16 +91,6 @@ export const PasteTable: React.FC = () => {
     setErrors([])
   }, [setRawData, setErrors, setSelectedWells])
 
-  // 生成时间点标签用于预览
-  const generateTimeLabels = () => {
-    const [startTime, endTime] = timeRange
-    const labels = []
-    for (let i = startTime; i <= endTime; i++) {
-      labels.push(`${i}min`)
-    }
-    return labels
-  }
-
   return (
     <div className="space-y-4">
       <div>
