@@ -76,7 +76,7 @@ export type AppStore = AppState & AppActions
 
 // Validation schemas
 export const wellDataSchema = z.object({
-  wellId: z.string().regex(/^[A-H][1-9]|1[0-2]$/),
+  wellId: z.string().regex(/^[A-H](?:[1-9]|1[0-2])$/),
   timePoints: z.array(z.number().finite()).min(1)
 })
 

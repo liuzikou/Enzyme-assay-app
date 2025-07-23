@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react'
 import { useAssayStore, WellData } from '../features/hooks'
 
 export const PasteTable: React.FC = () => {
-  const { rawData, setRawData, setErrors, setSelectedWells } = useAssayStore()
+  const { rawData, setRawData, setErrors, setSelectedWells, timeRange } = useAssayStore()
   const [pasteText, setPasteText] = useState('')
 
   // 支持多分隔符：逗号、空格、Tab、中文逗号
@@ -10,35 +10,64 @@ export const PasteTable: React.FC = () => {
     const lines = text.trim().split('\n')
     if (lines.length === 0) return []
 
+    // 根据timeRange生成时间点（每分钟一个采样点）
+    const [startTime, endTime] = timeRange
+    const timePointsCount = endTime - startTime + 1
+    const expectedDataPoints = timePointsCount
+
     // Parse data rows
     const wells: WellData[] = []
     const errors: string[] = []
-    for (let i = 1; i < lines.length && i <= 96; i++) {
+    
+    for (let i = 0; i < lines.length && i < 96; i++) {
       // 支持多分隔符
       const line = lines[i].split(/[\s,，\t]+/).map(s => s.trim())
-      const wellId = line[0]
-      if (!wellId || !/^[A-H](?:[1-9]|1[0-2])$/.test(wellId)) {
-        errors.push(`Invalid Well ID at line ${i + 1}: ${wellId}`)
+      const wellIdRaw = line[0]
+      
+      if (!wellIdRaw) {
+        errors.push(`Empty well ID at line ${i + 1}`)
         continue
       }
+
+      // 支持A01和A1两种格式，统一转换为A1格式
+      let wellId = wellIdRaw
+      if (/^[A-H]0[1-9]$/.test(wellIdRaw)) {
+        // 如果是A01格式，转换为A1格式
+        wellId = wellIdRaw.charAt(0) + wellIdRaw.slice(2)
+      }
+      
+      if (!/^[A-H](?:[1-9]|1[0-2])$/.test(wellId)) {
+        errors.push(`Invalid Well ID at line ${i + 1}: ${wellIdRaw}`)
+        continue
+      }
+      
       if (line.length < 2) {
         errors.push(`No data for well ${wellId} at line ${i + 1}`)
         continue
       }
+      
       const values = line.slice(1).map(val => {
         const num = parseFloat(val)
         return isNaN(num) ? 0 : num
       })
+
+      // 检查数据点数量是否匹配预期
+      if (values.length !== expectedDataPoints) {
+        errors.push(`Well ${wellId} has ${values.length} data points, expected ${expectedDataPoints} (time range: ${startTime}-${endTime} minutes)`)
+        continue
+      }
+
       wells.push({
         wellId,
         timePoints: values
       })
     }
+    
     if (errors.length > 0) {
       throw new Error(errors.join('; '))
     }
     return wells
-  }, [])
+  }, [timeRange])
 
   const handlePaste = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value
@@ -62,6 +91,16 @@ export const PasteTable: React.FC = () => {
     setErrors([])
   }, [setRawData, setErrors, setSelectedWells])
 
+  // 生成时间点标签用于预览
+  const generateTimeLabels = () => {
+    const [startTime, endTime] = timeRange
+    const labels = []
+    for (let i = startTime; i <= endTime; i++) {
+      labels.push(`${i}min`)
+    }
+    return labels
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -71,7 +110,7 @@ export const PasteTable: React.FC = () => {
         <textarea
           value={pasteText}
           onChange={handlePaste}
-          placeholder="Paste your CSV data here... First column should be Well ID (A1-H12), followed by time columns. Supports comma, space, tab, and Chinese comma as separators."
+          placeholder={`Paste your CSV data here... First column should be Well ID (A1-H12 or A01-H12), followed by ${timeRange[1] - timeRange[0] + 1} data points (${timeRange[0]}-${timeRange[1]} minutes). Supports comma, space, tab, and Chinese comma as separators.`}
           className="input-field h-32 resize-none"
         />
       </div>
@@ -107,8 +146,8 @@ export const PasteTable: React.FC = () => {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-2">Well</th>
-                  {rawData[0]?.timePoints.slice(0, 5).map((_, i) => (
-                    <th key={i} className="text-right py-2 px-2">T{i}</th>
+                  {generateTimeLabels().slice(0, 5).map((label, i) => (
+                    <th key={i} className="text-right py-2 px-2">{label}</th>
                   ))}
                 </tr>
               </thead>

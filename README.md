@@ -86,23 +86,38 @@ src/
 
 ### Sample Data
 
-A sample CSV file is included at `public/sample-data.csv` for testing. You can copy and paste this data to see the application in action.
+Sample CSV files are included for testing:
+- `public/sample-data.csv` - Original format with time headers
+- `public/sample-data-new-format.csv` - New format without time headers (supports A01/A1 formats)
+
+You can copy and paste either data to see the application in action.
 
 ## Data Format
 
 The application expects CSV data with:
-- First column: Well ID (A1-H12 format)
-- Subsequent columns: Time point measurements
-- 96 rows total (one per well)
+- First column: Well ID (supports both A1-H12 and A01-H12 formats)
+- Subsequent columns: Measurement values (no time column needed)
+- Number of data points must match the time range setting
+- Time points are automatically generated based on "Time Range (minutes)" setting
 
-Example:
+**Time Range Setting**: 
+- Set the start and end time in minutes (e.g., 0 to 29 minutes = 30 data points)
+- Data points are sampled at 1-minute intervals
+
+**Well ID Formats**:
+- Standard format: A1, A2, ..., H12
+- Alternative format: A01, A02, ..., H12 (automatically converted to standard format)
+
+Example (for 0-29 minute range, 30 data points):
 ```csv
-Well ID,0min,1min,2min,3min
-A1,0.1,0.2,0.3,0.4
-A2,0.1,0.2,0.3,0.4
+A01,0.123,0.234,0.345,0.456,0.567,0.678,0.789,0.890,0.901,1.012,1.123,1.234,1.345,1.456,1.567,1.678,1.789,1.890,1.901,2.012,2.123,2.234,2.345,2.456,2.567,2.678,2.789,2.890,2.901,3.012
+A1,0.234,0.345,0.456,0.567,0.678,0.789,0.890,0.901,1.012,1.123,1.234,1.345,1.456,1.567,1.678,1.789,1.890,1.901,2.012,2.123,2.234,2.345,2.456,2.567,2.678,2.789,2.890,2.901,3.012,3.123
+B1,0.345,0.456,0.567,0.678,0.789,0.890,0.901,1.012,1.123,1.234,1.345,1.456,1.567,1.678,1.789,1.890,1.901,2.012,2.123,2.234,2.345,2.456,2.567,2.678,2.789,2.890,2.901,3.012,3.123,3.234
 ...
-H12,0.1,0.2,0.3,0.4
+H12,0.567,0.678,0.789,0.890,0.901,1.012,1.123,1.234,1.345,1.456,1.567,1.678,1.789,1.890,1.901,2.012,2.123,2.234,2.345,2.456,2.567,2.678,2.789,2.890,2.901,3.012,3.123,3.234,3.345,3.456
 ```
+
+**Note**: The application automatically validates that the number of data points matches your time range setting.
 
 ## Algorithms
 

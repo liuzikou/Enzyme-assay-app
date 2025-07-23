@@ -203,8 +203,8 @@ export function validateWellData(data: { wellId: string; timePoints: number[] }[
     return errors
   }
   
-  // Check for valid well IDs
-  const validWellPattern = /^[A-H][1-9]|1[0-2]$/
+  // Check for valid well IDs (support both A1 and A01 formats)
+  const validWellPattern = /^[A-H](?:[1-9]|1[0-2])$/
   const invalidWells = data.filter(well => !validWellPattern.test(well.wellId))
   if (invalidWells.length > 0) {
     errors.push(`Invalid well IDs: ${invalidWells.map(w => w.wellId).join(', ')}`)
