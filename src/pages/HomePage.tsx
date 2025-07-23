@@ -7,7 +7,7 @@ import { ExportActions } from '../components/ExportActions'
 import { useAssayStore } from '../features/hooks'
 
 export const HomePage: React.FC = () => {
-  const { errors, results, isLoading, rawData } = useAssayStore()
+  const { errors, isLoading } = useAssayStore()
 
   return (
     <div className="min-h-screen bg-gray-50">
