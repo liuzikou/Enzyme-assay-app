@@ -33,6 +33,9 @@ export const PlotArea: React.FC = () => {
     }
     if (well.timePoints.length - 1 > globalMaxX) globalMaxX = well.timePoints.length - 1
   }
+  // 保证domain最小为1
+  if (globalMaxY <= 0) globalMaxY = 1
+  if (globalMaxX <= 0) globalMaxX = 1
 
   if (rawData.length === 0) {
     return (
