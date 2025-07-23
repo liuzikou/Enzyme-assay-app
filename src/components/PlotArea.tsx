@@ -9,7 +9,14 @@ export const PlotArea: React.FC = () => {
   const cols = Array.from({ length: 12 }, (_, i) => i + 1)
 
   const getWellData = (wellId: string) => {
-    return rawData.find(well => well.wellId === wellId)?.timePoints || []
+    // 兼容A01和A1格式，统一转换为A1格式
+    let id = wellId
+    if (/^[A-H]0[1-9]$/.test(wellId)) {
+      id = wellId.charAt(0) + wellId.slice(2)
+    }
+    const found = rawData.find(well => well.wellId === id)
+    console.log('getWellData', wellId, id, found)
+    return found?.timePoints || []
   }
 
   const getWellColor = (wellId: string) => {
@@ -24,29 +31,22 @@ export const PlotArea: React.FC = () => {
     console.log('Clicked well:', wellId)
   }
 
-  // 计算全局最大Y值和最大X值
+  // 计算全局最大Y值和最小Y值
   let globalMaxY = 0
+  let globalMinY = Number.POSITIVE_INFINITY
   let globalMaxX = 0
   for (const well of rawData) {
     for (let i = 0; i < well.timePoints.length; i++) {
       if (well.timePoints[i] > globalMaxY) globalMaxY = well.timePoints[i]
+      if (well.timePoints[i] < globalMinY) globalMinY = well.timePoints[i]
     }
     if (well.timePoints.length - 1 > globalMaxX) globalMaxX = well.timePoints.length - 1
   }
-  // 保证domain最小为1
   if (globalMaxY <= 0) globalMaxY = 1
-  if (globalMaxX <= 0) globalMaxX = 1
-
-  if (rawData.length === 0) {
-    return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Time Series Plots</h3>
-        <div className="text-center py-8 text-gray-500">
-          <p>No data available. Paste CSV data to see plots.</p>
-        </div>
-      </div>
-    )
-  }
+  if (!isFinite(globalMinY) || globalMinY < 0) globalMinY = 0
+  // 不加padding
+  const yDomainMin = globalMinY
+  const yDomainMax = globalMaxY
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -77,18 +77,21 @@ export const PlotArea: React.FC = () => {
               const data = getWellData(wellId)
               const color = getWellColor(wellId)
               const isSelected = selectedWells.has(wellId)
-              
+              // debug日志
+              if (data && data.length > 0) {
+                console.log('PlotArea wellId:', wellId, 'data:', data)
+              }
               return (
-                <div key={wellId} className="h-10 flex items-center justify-center">
+                <div key={wellId} className="h-9 flex items-center justify-center">
                   <Sparkline
                     data={data}
-                    width={60}
-                    height={30}
+                    width={120}
+                    height={75}
                     color={color}
                     isSelected={isSelected}
                     onClick={() => handleWellClick(wellId)}
-                    yDomain={globalMaxY}
-                    xDomain={globalMaxX}
+                    yDomain={[yDomainMin, yDomainMax]}
+                    xDomain={data.length > 0 ? data.length - 1 : 1}
                   />
                 </div>
               )

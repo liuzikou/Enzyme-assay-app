@@ -12,8 +12,7 @@ export const PasteTable: React.FC = () => {
 
     // 根据timeRange生成时间点（每分钟一个采样点）
     const [startTime, endTime] = timeRange
-    const timePointsCount = endTime - startTime + 1
-    const expectedDataPoints = timePointsCount
+    const expectedDataPoints = endTime
 
     // Parse data rows
     const wells: WellData[] = []
@@ -29,12 +28,17 @@ export const PasteTable: React.FC = () => {
         continue
       }
 
-      // 支持A01和A1两种格式，统一转换为A1格式
+      // 支持A01和A1两种格式，统一转换为A1~A12格式
       let wellId = wellIdRaw
       if (/^[A-H]0[1-9]$/.test(wellIdRaw)) {
-        // 如果是A01格式，转换为A1格式
         wellId = wellIdRaw.charAt(0) + wellIdRaw.slice(2)
       }
+      // 强制A01/A1都变成A1，A10/A10都变成A10
+      if (/^[A-H](0?[1-9]|1[0-2])$/.test(wellId)) {
+        wellId = wellId.charAt(0) + String(Number(wellId.slice(1)))
+      }
+      // 再次强制标准化，防止遗漏
+      wellId = wellId.charAt(0) + String(Number(wellId.slice(1)))
       
       if (!/^[A-H](?:[1-9]|1[0-2])$/.test(wellId)) {
         errors.push(`Invalid Well ID at line ${i + 1}: ${wellIdRaw}`)
@@ -53,7 +57,7 @@ export const PasteTable: React.FC = () => {
 
       // 检查数据点数量是否匹配预期
       if (values.length !== expectedDataPoints) {
-        errors.push(`Well ${wellId} has ${values.length} data points, expected ${expectedDataPoints} (time range: ${startTime}-${endTime} minutes)`)
+        errors.push(`Well ${wellId} has ${values.length} data points, expected ${expectedDataPoints} (time range: 0-${endTime - 1} minutes)`)
         continue
       }
 
@@ -74,7 +78,12 @@ export const PasteTable: React.FC = () => {
     setPasteText(text)
     try {
       const wells = parseCSVData(text)
+      console.log('wells to setRawData:', wells)
       setRawData(wells)
+      setTimeout(() => {
+        // @ts-ignore
+        console.log('rawData after setRawData:', window.__ASSAY_STORE__ ? window.__ASSAY_STORE__.getState().rawData : wells)
+      }, 100)
       setSelectedWells(new Set(wells.map(w => w.wellId))) // 自动选中有数据的孔
       setErrors([])
     } catch (error) {
@@ -101,7 +110,7 @@ export const PasteTable: React.FC = () => {
           <textarea
             value={pasteText}
             onChange={handlePaste}
-            placeholder={`Paste your CSV data here... First column should be Well ID (A1-H12 or A01-H12), followed by ${timeRange[1] - timeRange[0] + 1} data points (${timeRange[0]}-${timeRange[1]} minutes). Supports comma, space, tab, and Chinese comma as separators.`}
+            placeholder={`Paste your CSV data here... First column should be Well ID (A1-H12 or A01-H12), followed by ${timeRange[1]} data points (0-${timeRange[1] - 1} minutes). Supports comma, space, tab, and Chinese comma as separators.`}
             className="input-field h-32 resize-none w-full min-w-[400px] border-0 focus:ring-0 font-mono"
             style={{display: 'block'}}
           />

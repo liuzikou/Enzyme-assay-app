@@ -8,7 +8,7 @@ interface SparklineProps {
   color?: string
   onClick?: () => void
   isSelected?: boolean
-  yDomain?: number
+  yDomain?: [number, number]
   xDomain?: number
 }
 
@@ -19,9 +19,10 @@ export const Sparkline: React.FC<SparklineProps> = ({
   color = '#2258cf',
   onClick,
   isSelected = false,
-  yDomain = 1,
+  yDomain = [0, 1],
   xDomain = 10
 }) => {
+  console.log('Sparkline data', data)
   // Convert array to chart data format
   const chartData = data.map((value, index) => ({
     time: index,
@@ -44,39 +45,37 @@ export const Sparkline: React.FC<SparklineProps> = ({
 
   return (
     <div
-      className={`cursor-pointer border rounded ${
+      className={`cursor-pointer border rounded bg-white ${
         isSelected ? 'border-accent bg-accent/5' : 'border-gray-200'
       }`}
       style={{ width, height }}
       onClick={onClick}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
-          <XAxis dataKey="time" type="number" domain={[0, xDomain]} hide={false} tick={false} axisLine={false} />
-          <YAxis domain={[0, yDomain]} hide={false} tick={false} axisLine={false} />
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke={color}
-            strokeWidth={1.5}
-            dot={false}
-            activeDot={{ r: 2, fill: color }}
-          />
-          <Tooltip
-            content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                return (
-                  <div className="bg-white border border-gray-200 rounded shadow-lg p-2 text-xs">
-                    <p>Time: {payload[0].payload.time}</p>
-                    <p>Value: {(payload[0].value as number)?.toFixed(3)}</p>
-                  </div>
-                )
-              }
-              return null
-            }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+      <LineChart width={width} height={height} data={chartData} margin={{ top: 2, right: 4, bottom: 2, left: 4 }}>
+        <XAxis dataKey="time" type="number" domain={xDomain ? [0, xDomain] : [0, 1]} hide={false} tick={false} axisLine={false} />
+        <YAxis domain={yDomain} hide={false} tick={false} axisLine={false} />
+        <Line
+          type="monotone"
+          dataKey="value"
+          stroke={color}
+          strokeWidth={1.5}
+          dot={false}
+          activeDot={{ r: 2, fill: color }}
+        />
+        <Tooltip
+          content={({ active, payload }) => {
+            if (active && payload && payload.length) {
+              return (
+                <div className="bg-white border border-gray-200 rounded shadow-lg p-2 text-xs">
+                  <p>Time: {payload[0].payload.time}</p>
+                  <p>Value: {(payload[0].value as number)?.toFixed(3)}</p>
+                </div>
+              )
+            }
+            return null
+          }}
+        />
+      </LineChart>
     </div>
   )
 } 

@@ -161,22 +161,25 @@ export const InputPanel: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Time Range (minutes)
           </label>
-          <div className="flex space-x-2">
+          <div className="flex flex-col space-y-2">
             <input
-              type="number"
-              value={timeRange[0]}
-              onChange={(e) => setTimeRange([parseInt(e.target.value) || 0, timeRange[1]])}
-              className="input-field"
-              min="0"
-            />
-            <span className="flex items-center text-gray-500">to</span>
-            <input
-              type="number"
+              type="range"
+              min={30}
+              max={120}
+              step={30}
               value={timeRange[1]}
-              onChange={(e) => setTimeRange([timeRange[0], parseInt(e.target.value) || 30])}
-              className="input-field"
-              min="1"
+              onChange={e => setTimeRange([0, parseInt(e.target.value)])}
+              className="w-full"
             />
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>30</span>
+              <span>60</span>
+              <span>90</span>
+              <span>120</span>
+            </div>
+            <div className="text-sm text-gray-700 mt-1">
+              Duration: {timeRange[1]} min (0 ~ {timeRange[1] - 1}), {timeRange[1]} samples
+            </div>
           </div>
         </div>
 
