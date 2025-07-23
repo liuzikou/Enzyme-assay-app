@@ -1,5 +1,5 @@
 import React from 'react'
-import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts'
+import { LineChart, Line, ResponsiveContainer, Tooltip, YAxis, XAxis } from 'recharts'
 
 interface SparklineProps {
   data: number[]
@@ -8,6 +8,8 @@ interface SparklineProps {
   color?: string
   onClick?: () => void
   isSelected?: boolean
+  yDomain?: number
+  xDomain?: number
 }
 
 export const Sparkline: React.FC<SparklineProps> = ({
@@ -16,7 +18,9 @@ export const Sparkline: React.FC<SparklineProps> = ({
   height = 40,
   color = '#2258cf',
   onClick,
-  isSelected = false
+  isSelected = false,
+  yDomain = 1,
+  xDomain = 10
 }) => {
   // Convert array to chart data format
   const chartData = data.map((value, index) => ({
@@ -48,6 +52,8 @@ export const Sparkline: React.FC<SparklineProps> = ({
     >
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+          <XAxis dataKey="time" type="number" domain={[0, xDomain]} hide={false} tick={false} axisLine={false} />
+          <YAxis domain={[0, yDomain]} hide={false} tick={false} axisLine={false} />
           <Line
             type="monotone"
             dataKey="value"

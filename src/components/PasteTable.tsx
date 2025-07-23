@@ -107,12 +107,15 @@ export const PasteTable: React.FC = () => {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Paste CSV Data
         </label>
-        <textarea
-          value={pasteText}
-          onChange={handlePaste}
-          placeholder={`Paste your CSV data here... First column should be Well ID (A1-H12 or A01-H12), followed by ${timeRange[1] - timeRange[0] + 1} data points (${timeRange[0]}-${timeRange[1]} minutes). Supports comma, space, tab, and Chinese comma as separators.`}
-          className="input-field h-32 resize-none"
-        />
+        <div className="overflow-auto border rounded bg-white" style={{maxHeight: '200px', maxWidth: '100%'}}>
+          <textarea
+            value={pasteText}
+            onChange={handlePaste}
+            placeholder={`Paste your CSV data here... First column should be Well ID (A1-H12 or A01-H12), followed by ${timeRange[1] - timeRange[0] + 1} data points (${timeRange[0]}-${timeRange[1]} minutes). Supports comma, space, tab, and Chinese comma as separators.`}
+            className="input-field h-32 resize-none w-full min-w-[400px] border-0 focus:ring-0 font-mono"
+            style={{display: 'block'}}
+          />
+        </div>
       </div>
 
       <div className="flex space-x-2">
@@ -138,35 +141,7 @@ export const PasteTable: React.FC = () => {
         </div>
       )}
 
-      {rawData.length > 0 && (
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">Preview (first 5 wells)</h4>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-2">Well</th>
-                  {generateTimeLabels().slice(0, 5).map((label, i) => (
-                    <th key={i} className="text-right py-2 px-2">{label}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rawData.slice(0, 5).map(well => (
-                  <tr key={well.wellId} className="border-b border-gray-100">
-                    <td className="py-1 font-medium">{well.wellId}</td>
-                    {well.timePoints.slice(0, 5).map((value, i) => (
-                      <td key={i} className="text-right py-1 px-2">
-                        {value.toFixed(2)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {/* 移除预览区域 */}
     </div>
   )
 } 

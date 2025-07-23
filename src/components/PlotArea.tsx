@@ -24,6 +24,16 @@ export const PlotArea: React.FC = () => {
     console.log('Clicked well:', wellId)
   }
 
+  // 计算全局最大Y值和最大X值
+  let globalMaxY = 0
+  let globalMaxX = 0
+  for (const well of rawData) {
+    for (let i = 0; i < well.timePoints.length; i++) {
+      if (well.timePoints[i] > globalMaxY) globalMaxY = well.timePoints[i]
+    }
+    if (well.timePoints.length - 1 > globalMaxX) globalMaxX = well.timePoints.length - 1
+  }
+
   if (rawData.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
@@ -74,6 +84,8 @@ export const PlotArea: React.FC = () => {
                     color={color}
                     isSelected={isSelected}
                     onClick={() => handleWellClick(wellId)}
+                    yDomain={globalMaxY}
+                    xDomain={globalMaxX}
                   />
                 </div>
               )
