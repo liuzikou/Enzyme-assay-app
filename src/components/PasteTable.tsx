@@ -11,8 +11,7 @@ export const PasteTable: React.FC = () => {
     if (lines.length === 0) return []
 
     // 根据timeRange生成时间点（每分钟一个采样点）
-    const [startTime, endTime] = timeRange
-    const expectedDataPoints = endTime
+    const endTime = timeRange[1]
 
     // Parse data rows
     const wells: WellData[] = []
@@ -56,8 +55,8 @@ export const PasteTable: React.FC = () => {
       })
 
       // 检查数据点数量是否匹配预期
-      if (values.length !== expectedDataPoints) {
-        errors.push(`Well ${wellId} has ${values.length} data points, expected ${expectedDataPoints} (time range: 0-${endTime - 1} minutes)`)
+      if (values.length !== endTime) {
+        errors.push(`Well ${wellId} has ${values.length} data points, expected ${endTime} (time range: 0-${endTime - 1} minutes)`)
         continue
       }
 
