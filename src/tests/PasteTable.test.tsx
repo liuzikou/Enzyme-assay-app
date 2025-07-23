@@ -5,16 +5,7 @@ import { useAssayStore } from '../features/hooks'
 
 // Mock the store
 vi.mock('../features/hooks', () => ({
-  useAssayStore: vi.fn(() => ({
-    rawData: [],
-    timeRange: [0, 29], // 30个时间点
-    setRawData: vi.fn(),
-    setErrors: vi.fn(),
-    setSelectedWells: vi.fn(),
-    getState: vi.fn(() => ({
-      errors: []
-    }))
-  }))
+  useAssayStore: vi.fn()
 }))
 
 describe('PasteTable', () => {
@@ -27,12 +18,10 @@ describe('PasteTable', () => {
     const mockStore = {
       rawData: [],
       timeRange: [0, 29], // 30个时间点
+      errors: [],
       setRawData: mockSetRawData,
       setErrors: mockSetErrors,
-      setSelectedWells: mockSetSelectedWells,
-      getState: vi.fn(() => ({
-        errors: []
-      }))
+      setSelectedWells: mockSetSelectedWells
     }
     ;(useAssayStore as any).mockReturnValue(mockStore)
   })

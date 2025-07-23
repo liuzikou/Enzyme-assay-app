@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react'
 import { useAssayStore, WellData } from '../features/hooks'
 
 export const PasteTable: React.FC = () => {
-  const { rawData, setRawData, setErrors, setSelectedWells, timeRange } = useAssayStore()
+  const { rawData, setRawData, setErrors, setSelectedWells, timeRange, errors } = useAssayStore()
   const [pasteText, setPasteText] = useState('')
 
   // 支持多分隔符：逗号、空格、Tab、中文逗号
@@ -130,9 +130,9 @@ export const PasteTable: React.FC = () => {
       </div>
 
       {/* 错误提示 */}
-      {Array.isArray(useAssayStore.getState().errors) && useAssayStore.getState().errors.length > 0 && (
+      {Array.isArray(errors) && errors.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-          {useAssayStore.getState().errors.map((err, idx) => (
+          {errors.map((err, idx) => (
             <div key={idx}>{err}</div>
           ))}
         </div>
