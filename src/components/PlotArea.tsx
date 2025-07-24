@@ -85,7 +85,7 @@ export const PlotArea: React.FC = () => {
                 <div key={wellId} className="h-9 flex items-center justify-center">
                   <Sparkline
                     data={data}
-                    width={120}
+                    width={90}
                     height={75}
                     color={color}
                     isSelected={isSelected}
