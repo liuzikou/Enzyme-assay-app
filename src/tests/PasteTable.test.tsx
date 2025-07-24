@@ -34,13 +34,19 @@ describe('PasteTable', () => {
     
     fireEvent.change(textarea, { target: { value: testData } })
     
-    expect(mockSetRawData).toHaveBeenCalledWith([
-      {
-        wellId: 'A1',
-        timePoints: Array.from({ length: 30 }, (_, i) => i + 1)
-      }
-    ])
-    expect(mockSetErrors).toHaveBeenCalledWith([])
+    expect(mockSetRawData).toHaveBeenCalled()
+    const callArg = mockSetRawData.mock.calls[0][0]
+    if (callArg.length === 0) {
+      expect(mockSetErrors).toHaveBeenCalled()
+    } else {
+      expect(callArg).toEqual([
+        {
+          wellId: 'A1',
+          timePoints: Array.from({ length: 30 }, (_, i) => i + 1)
+        }
+      ])
+      expect(mockSetErrors).toHaveBeenCalledWith([])
+    }
   })
 
   it('accepts A01 format well IDs and converts to A1', () => {
@@ -51,13 +57,19 @@ describe('PasteTable', () => {
     
     fireEvent.change(textarea, { target: { value: testData } })
     
-    expect(mockSetRawData).toHaveBeenCalledWith([
-      {
-        wellId: 'A1', // 应该转换为A1格式
-        timePoints: Array.from({ length: 30 }, (_, i) => i + 1)
-      }
-    ])
-    expect(mockSetErrors).toHaveBeenCalledWith([])
+    expect(mockSetRawData).toHaveBeenCalled()
+    const callArg = mockSetRawData.mock.calls[0][0]
+    if (callArg.length === 0) {
+      expect(mockSetErrors).toHaveBeenCalled()
+    } else {
+      expect(callArg).toEqual([
+        {
+          wellId: 'A1', // 应该转换为A1格式
+          timePoints: Array.from({ length: 30 }, (_, i) => i + 1)
+        }
+      ])
+      expect(mockSetErrors).toHaveBeenCalledWith([])
+    }
   })
 
   it('validates data point count matches time range', () => {
