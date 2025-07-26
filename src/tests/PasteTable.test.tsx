@@ -100,8 +100,39 @@ describe('PasteTable', () => {
 
   it('updates placeholder text based on time range', () => {
     render(<PasteTable />)
-    
+
     const textarea = screen.getByRole('textbox')
     expect(textarea).toHaveAttribute('placeholder', expect.stringContaining('30 data points (0-29 minutes)'))
   })
-}) 
+
+  it('shows preview table after valid input', () => {
+    const mockStore: any = {
+      rawData: [],
+      timeRange: [0, 30],
+      errors: [],
+      setRawData: (data: any) => {
+        mockStore.rawData = data
+      },
+      setErrors: mockSetErrors,
+      setSelectedWells: mockSetSelectedWells
+    }
+    ;(useAssayStore as any).mockReturnValue(mockStore)
+    const { rerender } = render(<PasteTable />)
+
+    const textarea = screen.getByRole('textbox')
+    const testData = `A1,${Array.from({ length: 30 }, (_, i) => i + 1).join(',')}`
+    fireEvent.change(textarea, { target: { value: testData } })
+
+    rerender(<PasteTable />)
+
+    expect(screen.getByRole('table')).toBeInTheDocument()
+  })
+  it('rejects Excel files over 1 MB', async () => {
+    const { container } = render(<PasteTable />)
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    const bigArray = new Uint8Array(1024 * 1024 + 1)
+    const bigFile = new File([bigArray], 'big.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    await fireEvent.change(input, { target: { files: [bigFile] } })
+    expect(mockSetErrors).toHaveBeenCalledWith([expect.stringContaining('1 MB')])
+  })
+})

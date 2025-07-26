@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { useAssayStore, WellData } from '../features/hooks'
+import { parseExcel } from '../utils/parseExcel'
+import { DataPreviewTable } from './DataPreviewTable'
 
 export const PasteTable: React.FC = () => {
   const { rawData, setRawData, setErrors, setSelectedWells, timeRange, errors } = useAssayStore()
@@ -92,6 +94,32 @@ export const PasteTable: React.FC = () => {
     }
   }, [parseCSVData, setRawData, setErrors, setSelectedWells])
 
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 1024 * 1024) {
+      setRawData([])
+      setSelectedWells(new Set())
+      setErrors([`File size exceeds 1 MB limit`])
+      e.target.value = ''
+      return
+    }
+    try {
+      const wells = await parseExcel(file, timeRange)
+      const text = wells.map(w => [w.wellId, ...w.timePoints].join(',')).join('\n')
+      setPasteText(text)
+      const parsed = parseCSVData(text)
+      setRawData(parsed)
+      setSelectedWells(new Set(parsed.map(w => w.wellId)))
+      setErrors([])
+    } catch (error) {
+      setRawData([])
+      setSelectedWells(new Set())
+      setErrors([error instanceof Error ? error.message : 'Invalid Excel file. Please check your data.'])
+    }
+    e.target.value = ''
+  }, [parseCSVData, setRawData, setErrors, setSelectedWells, timeRange])
+
   const handleClear = useCallback(() => {
     setPasteText('')
     setRawData([])
@@ -103,17 +131,29 @@ export const PasteTable: React.FC = () => {
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Paste CSV Data
+          Paste CSV Data (or import from Excel below)
         </label>
         <div className="overflow-auto border rounded bg-white" style={{maxHeight: '200px', maxWidth: '100%'}}>
           <textarea
             value={pasteText}
             onChange={handlePaste}
-            placeholder={`Paste your CSV data here... First column should be Well ID (A1-H12 or A01-H12), followed by ${timeRange[1]} data points (0-${timeRange[1] - 1} minutes). Supports comma, space, tab, and Chinese comma as separators.`}
+            placeholder={`Paste your CSV data here (same structure as Excel upload). First column should be Well ID (A1-H12 or A01-H12), followed by ${timeRange[1]} data points (0-${timeRange[1] - 1} minutes). Supports comma, space, tab, and Chinese comma as separators.`}
             className="input-field h-32 resize-none w-full min-w-[400px] border-0 focus:ring-0 font-mono"
             style={{display: 'block'}}
           />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Or Upload Excel File
+        </label>
+        <input
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={handleFileUpload}
+          className="input-field"
+        />
       </div>
 
       <div className="flex space-x-2">
@@ -139,7 +179,9 @@ export const PasteTable: React.FC = () => {
         </div>
       )}
 
-      {/* 移除预览区域 */}
+      {rawData.length > 0 && (
+        <DataPreviewTable data={rawData} />
+      )}
     </div>
   )
 } 

@@ -5,7 +5,7 @@ A production-ready, browser-based application for analyzing enzyme reaction kine
 ## Features
 
 - **Three Assay Types**: T2943, S2251, and HoFF with specific algorithms
-- **Real-time Data Processing**: Paste CSV data and get instant results
+- **Real-time Data Processing**: Paste CSV or upload Excel data and get instant results
 - **Interactive Well Selection**: 96-well plate grid for selecting wells and controls
 - **Time Series Visualization**: Sparkline charts for each well
 - **Results Table**: Sortable table with summary statistics
@@ -75,14 +75,15 @@ src/
 ## Usage
 
 1. **Select Assay Type**: Choose between T2943, S2251, or HoFF
-2. **Paste CSV Data**: Paste your 96-well plate data in CSV format
-3. **Select Wells**: Use the well selector to choose wells for analysis
-4. **Configure Controls**: For S2251 and HoFF, select control wells
-5. **Set Parameters**: Adjust time range and smoothing window
-6. **Calculate**: Click calculate to run the analysis
-7. **View Results**: See the calculated metrics for each well
-8. **Visualize Data**: View time series plots for all wells
-9. **Export Results**: Download results in CSV or XLSX format
+2. **Paste or Upload Data**: Paste CSV data or upload Excel (`.xlsx`/`.xls`) files in the same format
+3. **Preview Parsed Data**: A small table shows the first few wells and time points
+4. **Select Wells**: Use the well selector to choose wells for analysis
+5. **Configure Controls**: For S2251 and HoFF, select control wells
+6. **Set Parameters**: Adjust time range and smoothing window
+7. **Calculate**: Click calculate to run the analysis
+8. **View Results**: See the calculated metrics for each well
+9. **Visualize Data**: View time series plots for all wells
+10. **Export Results**: Download results in CSV or XLSX format
 
 ### Sample Data
 
@@ -94,7 +95,8 @@ You can copy and paste either data to see the application in action.
 
 ## Data Format
 
-The application expects CSV data with:
+The application expects CSV or Excel data with:
+Excel files (`.xlsx` or `.xls`) should contain the same columns as the CSV format. The data is read from the **"Table All Cycles"** sheet. The first 10 rows and the second column are ignored.
 - First column: Well ID (supports both A1-H12 and A01-H12 formats)
 - Subsequent columns: Measurement values (no time column needed)
 - Number of data points must match the time range setting
@@ -118,6 +120,11 @@ H12,0.567,0.678,0.789,0.890,0.901,1.012,1.123,1.234,1.345,1.456,1.567,1.678,1.78
 ```
 
 **Note**: The application automatically validates that the number of data points matches your time range setting.
+
+### File Handling
+
+Uploaded Excel files are read directly in the browser and are never stored externally. Files up to **1&nbsp;MB** are accepted; larger files will be rejected. Data is converted to CSV text and processed entirely in memory, so no additional storage is required.
+If the selected time range exceeds the number of minutes available in the Excel file, an error is shown.
 
 ## Algorithms
 
