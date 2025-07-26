@@ -24,18 +24,18 @@ export function parseExcel(file: File, timeRange: [number, number]): Promise<Wel
         }
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as string[][]
         const trimmed = rows.slice(10).map(r => r.filter((_, idx) => idx !== 1))
-        if (trimmed.length < 3) {
+        if (trimmed.length < 2) {
           reject(new Error('Excel file format is not valid'))
           return
         }
-        const header = trimmed[1].slice(1).map(v => String(v))
+        const header = trimmed[0].slice(1).map(v => String(v))
         const totalMinutes = header.length
         if (totalMinutes < end) {
           reject(new Error(`Excel file only contains ${totalMinutes} minutes of data`))
           return
         }
         const selectedCols = header.slice(0, end)
-        const dataRows = trimmed.slice(2)
+        const dataRows = trimmed.slice(1)
         const wells: WellData[] = []
         for (const row of dataRows) {
           const wellId = String(row[0]).trim()
