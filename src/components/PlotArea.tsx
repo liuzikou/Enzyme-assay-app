@@ -66,61 +66,71 @@ export const PlotArea: React.FC = () => {
         </div>
       </div>
 
-      <div className={`grid gap-0 h-[480px]`} style={{ gridTemplateColumns: `60px repeat(${colsWithData.length}, 90px)` }}>
-        {/* Column headers */}
-        <div className="h-8"></div>
-        {colsWithData.map(col => (
-          <div key={col} className="h-8 flex items-center justify-center text-xs font-medium text-gray-500">
-            {col}
-          </div>
-        ))}
-        
-        {/* Row headers and sparklines */}
-        {rowsWithData.map(row => (
-          <React.Fragment key={row}>
-            <div className="h-10 flex items-center justify-center text-xs font-medium text-gray-500">
-              {row}
+      {/* Scrollable container */}
+      <div className="overflow-auto">
+        {/* Grid with minimum width to ensure scrolling */}
+        <div 
+          className="grid gap-0 h-[480px]" 
+          style={{ 
+            gridTemplateColumns: `60px repeat(${colsWithData.length}, 90px)`,
+            minWidth: `${60 + (colsWithData.length * 90)}px`
+          }}
+        >
+          {/* Column headers */}
+          <div className="h-8 sticky top-0 bg-white z-10"></div>
+          {colsWithData.map(col => (
+            <div key={col} className="h-8 flex items-center justify-center text-xs font-medium text-gray-500 sticky top-0 bg-white z-10">
+              {col}
             </div>
-            {colsWithData.map(col => {
-              const wellId = `${row}${col}`
-              const data = getWellData(wellId)
-              const color = getWellColor(wellId)
-              const isSelected = selectedWells.has(wellId)
-              
-              // Hide cells with no data
-              if (data.length === 0) {
+          ))}
+          
+          {/* Row headers and sparklines */}
+          {rowsWithData.map(row => (
+            <React.Fragment key={row}>
+              <div className="h-10 flex items-center justify-center text-xs font-medium text-gray-500 sticky left-0 bg-white z-10">
+                {row}
+              </div>
+              {colsWithData.map(col => {
+                const wellId = `${row}${col}`
+                const data = getWellData(wellId)
+                const color = getWellColor(wellId)
+                const isSelected = selectedWells.has(wellId)
+                
+                // Hide cells with no data
+                if (data.length === 0) {
+                  return (
+                    <div key={wellId} className="h-9 flex items-center justify-center" style={{ 
+                      width: '90px', 
+                      minWidth: '90px', 
+                      maxWidth: '90px', 
+                      height: '75px', 
+                      minHeight: '75px', 
+                      maxHeight: '75px',
+                      backgroundColor: '#f9fafb',
+                      border: '1px dashed #d1d5db'
+                    }}>
+                      <span className="text-xs text-gray-400">-</span>
+                    </div>
+                  )
+                }
+                
                 return (
-                  <div key={wellId} className="h-9 flex items-center justify-center" style={{ 
-                    width: '90px', 
-                    minWidth: '90px', 
-                    maxWidth: '90px', 
-                    height: '75px', 
-                    minHeight: '75px', 
-                    maxHeight: '75px',
-                    backgroundColor: '#f9fafb',
-                    border: '1px dashed #d1d5db'
-                  }}>
-                    <span className="text-xs text-gray-400">-</span>
+                  <div key={wellId} className="h-9 flex items-center justify-center" style={{ width: '90px', minWidth: '90px', maxWidth: '90px', height: '75px', minHeight: '75px', maxHeight: '75px' }}>
+                    <ChartJsSparkline
+                      data={data}
+                      width={90}
+                      height={75}
+                      color={color}
+                      isSelected={isSelected}
+                      onClick={() => handleWellClick(wellId)}
+                      xDomain={data.length > 0 ? data.length - 1 : 1}
+                    />
                   </div>
                 )
-              }
-              
-              return (
-                <div key={wellId} className="h-9 flex items-center justify-center" style={{ width: '90px', minWidth: '90px', maxWidth: '90px', height: '75px', minHeight: '75px', maxHeight: '75px' }}>
-                  <ChartJsSparkline
-                    data={data}
-                    width={90}
-                    height={75}
-                    color={color}
-                    isSelected={isSelected}
-                    onClick={() => handleWellClick(wellId)}
-                    xDomain={data.length > 0 ? data.length - 1 : 1}
-                  />
-                </div>
-              )
-            })}
-          </React.Fragment>
-        ))}
+              })}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
     </div>
   )
