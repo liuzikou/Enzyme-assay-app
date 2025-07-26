@@ -31,20 +31,26 @@ export const PlotArea: React.FC = () => {
     console.log('Clicked well:', wellId)
   }
 
-  // 计算全局最大Y值和最小Y值
-  let globalMaxY = 0
-  let globalMinY = Number.POSITIVE_INFINITY
-  let globalMaxX = 0
-  for (const well of rawData) {
-    for (let i = 0; i < well.timePoints.length; i++) {
-      if (well.timePoints[i] > globalMaxY) globalMaxY = well.timePoints[i]
-      if (well.timePoints[i] < globalMinY) globalMinY = well.timePoints[i]
-    }
-    if (well.timePoints.length - 1 > globalMaxX) globalMaxX = well.timePoints.length - 1
+  // Check which rows and columns have data
+  const hasDataInRow = (row: string) => {
+    return cols.some(col => {
+      const wellId = `${row}${col}`
+      const data = getWellData(wellId)
+      return data.length > 0
+    })
   }
-  if (globalMaxY <= 0) globalMaxY = 1
-  if (!isFinite(globalMinY) || globalMinY < 0) globalMinY = 0
-  // 不加padding
+
+  const hasDataInCol = (col: number) => {
+    return rows.some(row => {
+      const wellId = `${row}${col}`
+      const data = getWellData(wellId)
+      return data.length > 0
+    })
+  }
+
+  // Filter rows and columns that have data
+  const rowsWithData = rows.filter(hasDataInRow)
+  const colsWithData = cols.filter(hasDataInCol)
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -55,32 +61,47 @@ export const PlotArea: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-13 gap-0 h-[480px]">
+      <div className={`grid gap-0 h-[480px]`} style={{ gridTemplateColumns: `60px repeat(${colsWithData.length}, 90px)` }}>
         {/* Column headers */}
         <div className="h-8"></div>
-        {cols.map(col => (
+        {colsWithData.map(col => (
           <div key={col} className="h-8 flex items-center justify-center text-xs font-medium text-gray-500">
             {col}
           </div>
         ))}
         
         {/* Row headers and sparklines */}
-        {rows.map(row => (
+        {rowsWithData.map(row => (
           <React.Fragment key={row}>
             <div className="h-10 flex items-center justify-center text-xs font-medium text-gray-500">
               {row}
             </div>
-            {cols.map(col => {
+            {colsWithData.map(col => {
               const wellId = `${row}${col}`
               const data = getWellData(wellId)
               const color = getWellColor(wellId)
               const isSelected = selectedWells.has(wellId)
-              // debug日志
-              if (data && data.length > 0) {
-                console.log('PlotArea wellId:', wellId, 'data:', data)
+              
+              // Hide cells with no data
+              if (data.length === 0) {
+                return (
+                  <div key={wellId} className="h-9 flex items-center justify-center" style={{ 
+                    width: '90px', 
+                    minWidth: '90px', 
+                    maxWidth: '90px', 
+                    height: '75px', 
+                    minHeight: '75px', 
+                    maxHeight: '75px',
+                    backgroundColor: '#f9fafb',
+                    border: '1px dashed #d1d5db'
+                  }}>
+                    <span className="text-xs text-gray-400">-</span>
+                  </div>
+                )
               }
+              
               return (
-                <div key={wellId} className="h-9 flex items-center justify-center">
+                <div key={wellId} className="h-9 flex items-center justify-center" style={{ width: '90px', minWidth: '90px', maxWidth: '90px', height: '75px', minHeight: '75px', maxHeight: '75px' }}>
                   <ChartJsSparkline
                     data={data}
                     width={90}
@@ -96,8 +117,6 @@ export const PlotArea: React.FC = () => {
           </React.Fragment>
         ))}
       </div>
-
-      {/* Legend removed */}
     </div>
   )
 } 
