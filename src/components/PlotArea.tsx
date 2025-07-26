@@ -3,7 +3,7 @@ import { ChartJsSparkline } from './ChartJsSparkline'
 import { useAssayStore } from '../features/hooks'
 
 export const PlotArea: React.FC = () => {
-  const { rawData, selectedWells, results } = useAssayStore()
+  const { rawData, selectedWells, results, setSelectedWells } = useAssayStore()
 
   const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
   const cols = Array.from({ length: 12 }, (_, i) => i + 1)
@@ -27,8 +27,13 @@ export const PlotArea: React.FC = () => {
   }
 
   const handleWellClick = (wellId: string) => {
-    // TODO: Implement well selection toggle
-    console.log('Clicked well:', wellId)
+    const newSelected = new Set(selectedWells)
+    if (newSelected.has(wellId)) {
+      newSelected.delete(wellId)
+    } else {
+      newSelected.add(wellId)
+    }
+    setSelectedWells(newSelected)
   }
 
   // Check which rows and columns have data
