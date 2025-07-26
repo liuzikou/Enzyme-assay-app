@@ -108,7 +108,7 @@ export const PlotArea: React.FC = () => {
           {/* Row headers and sparklines */}
           {rowsWithData.map(row => (
             <React.Fragment key={row}>
-              <div className="h-10 flex items-center justify-center text-xs font-medium text-gray-500 sticky left-0 bg-white z-10">
+              <div className="flex items-center justify-center text-xs font-medium text-gray-500 sticky left-0 bg-white z-10" style={{ height: '75px', minHeight: '75px', maxHeight: '75px' }}>
                 {row}
               </div>
               {colsWithData.map(col => {
@@ -145,7 +145,7 @@ export const PlotArea: React.FC = () => {
                       isSelected={isSelected}
                       onClick={() => handleWellClick(wellId)}
                       xDomain={data.length > 0 ? data.length - 1 : 1}
-                      yDomain={globalYDomain as [number, number]} // Add this
+                      yDomain={globalYDomain as [number, number]}
                     />
                   </div>
                 )
