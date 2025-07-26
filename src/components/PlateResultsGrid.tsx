@@ -1,6 +1,5 @@
 import { memo } from "react";
 import { useAssayStore } from "../features/hooks"; // Zustand store
-import clsx from "clsx";
 
 const COLS = Array.from({ length: 12 }, (_, i) => i + 1);
 const ROWS = ["A","B","C","D","E","F","G","H"];
@@ -53,10 +52,9 @@ const PlateResultsGrid = memo(() => {
                     return (
                       <td
                         key={id}
-                        className={clsx(
-                          "h-6 w-8 text-center border border-gray-300",
-                          Number.isFinite(val) ? "text-gray-900" : "text-gray-400"
-                        )}
+                        className={`h-6 w-8 text-center border border-gray-300 ${
+                          Number.isFinite(val) ? 'text-gray-900' : 'text-gray-400'
+                        }`}
                       >
                         {Number.isFinite(val) ? val.toFixed(sigDigits) : "—"}
                       </td>
