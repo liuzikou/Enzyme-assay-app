@@ -86,7 +86,7 @@ export const ChartJsSparkline: React.FC<ChartJsSparklineProps> = ({
   }
 
   const options = {
-    responsive: false,
+    responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },

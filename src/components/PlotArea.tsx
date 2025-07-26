@@ -145,7 +145,7 @@ export const PlotArea: React.FC = () => {
                       isSelected={isSelected}
                       onClick={() => handleWellClick(wellId)}
                       xDomain={data.length > 0 ? data.length - 1 : 1}
-                      yDomain={globalYDomain} // Add this
+                      yDomain={globalYDomain as [number, number]} // Add this
                     />
                   </div>
                 )
