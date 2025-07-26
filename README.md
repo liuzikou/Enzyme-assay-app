@@ -122,7 +122,7 @@ H12,0.567,0.678,0.789,0.890,0.901,1.012,1.123,1.234,1.345,1.456,1.567,1.678,1.78
 
 ### File Handling
 
-Uploaded Excel files are read directly in the browser. They are converted to CSV text and processed entirely in memory, so no data is saved or uploaded. For small files (under 1 MB) you do not need any external storage.
+Uploaded Excel files are read directly in the browser and are never stored externally. Files up to **1&nbsp;MB** are accepted; larger files will be rejected. Data is converted to CSV text and processed entirely in memory, so no additional storage is required.
 
 ## Algorithms
 

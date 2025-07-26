@@ -96,6 +96,13 @@ export const PasteTable: React.FC = () => {
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (file.size > 1024 * 1024) {
+      setRawData([])
+      setSelectedWells(new Set())
+      setErrors([`File size exceeds 1 MB limit`])
+      e.target.value = ''
+      return
+    }
     const reader = new FileReader()
     reader.onload = () => {
       try {
