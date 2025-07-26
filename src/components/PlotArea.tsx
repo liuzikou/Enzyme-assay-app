@@ -57,6 +57,27 @@ export const PlotArea: React.FC = () => {
   const rowsWithData = rows.filter(hasDataInRow)
   const colsWithData = cols.filter(hasDataInCol)
 
+  // Add this calculation back to PlotArea.tsx
+  const calculateGlobalYDomain = () => {
+    let globalMaxY = 0
+    let globalMinY = Number.POSITIVE_INFINITY
+    
+    for (const well of rawData) {
+      for (let i = 0; i < well.timePoints.length; i++) {
+        if (well.timePoints[i] > globalMaxY) globalMaxY = well.timePoints[i]
+        if (well.timePoints[i] < globalMinY) globalMinY = well.timePoints[i]
+      }
+    }
+    
+    if (globalMaxY <= 0) globalMaxY = 1
+    if (!isFinite(globalMinY) || globalMinY < 0) globalMinY = 0
+    
+    const padding = (globalMaxY - globalMinY) * 0.1
+    return [globalMinY - padding, globalMaxY + padding]
+  }
+
+  const globalYDomain = calculateGlobalYDomain()
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-4">
@@ -124,6 +145,7 @@ export const PlotArea: React.FC = () => {
                       isSelected={isSelected}
                       onClick={() => handleWellClick(wellId)}
                       xDomain={data.length > 0 ? data.length - 1 : 1}
+                      yDomain={globalYDomain} // Add this
                     />
                   </div>
                 )

@@ -66,20 +66,8 @@ export const ChartJsSparkline: React.FC<ChartJsSparklineProps> = ({
     )
   }
 
-  // Calculate Y-axis domain to ensure line starts from bottom
-  const dataMin = Math.min(...data)
-  const dataMax = Math.max(...data)
-  const dataRange = dataMax - dataMin
-  
-  // If all values are the same, create a small range
-  const effectiveRange = dataRange === 0 ? Math.max(0.1, dataMin * 0.1) : dataRange
-  
-  // Set Y-axis domain with padding to ensure line starts from bottom
-  const padding = effectiveRange * 0.1 // 10% padding
-  const chartYDomain = [
-    dataMin - padding,
-    dataMax + padding
-  ]
+  // Use the passed yDomain instead of calculating individual domain
+  const chartYDomain = yDomain
 
   const chartData = {
     labels: data.map((_, i) => i),
@@ -98,7 +86,7 @@ export const ChartJsSparkline: React.FC<ChartJsSparklineProps> = ({
   }
 
   const options = {
-    responsive: true,
+    responsive: false,
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
