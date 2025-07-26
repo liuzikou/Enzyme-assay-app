@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { useAssayStore, WellData } from '../features/hooks'
 import { parseExcel } from '../utils/parseExcel'
+import { DataPreviewTable } from './DataPreviewTable'
 
 export const PasteTable: React.FC = () => {
   const { rawData, setRawData, setErrors, setSelectedWells, timeRange, errors } = useAssayStore()
@@ -178,7 +179,9 @@ export const PasteTable: React.FC = () => {
         </div>
       )}
 
-      {/* 移除预览区域 */}
+      {rawData.length > 0 && (
+        <DataPreviewTable data={rawData} />
+      )}
     </div>
   )
 } 
