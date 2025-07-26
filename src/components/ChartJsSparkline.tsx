@@ -111,7 +111,7 @@ export const ChartJsSparkline: React.FC<ChartJsSparklineProps> = ({
       x: {
         display: false,
         min: 0,
-        max: data.length - 1,
+        max: xDomain, // Use xDomain instead of data.length - 1
         grid: {
           display: false
         }
