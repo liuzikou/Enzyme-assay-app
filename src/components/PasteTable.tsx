@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react'
-import * as XLSX from 'xlsx'
 import { useAssayStore, WellData } from '../features/hooks'
+import { parseExcel } from '../utils/parseExcel'
 
 export const PasteTable: React.FC = () => {
   const { rawData, setRawData, setErrors, setSelectedWells, timeRange, errors } = useAssayStore()
@@ -93,7 +93,7 @@ export const PasteTable: React.FC = () => {
     }
   }, [parseCSVData, setRawData, setErrors, setSelectedWells])
 
-  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 1024 * 1024) {
@@ -103,28 +103,21 @@ export const PasteTable: React.FC = () => {
       e.target.value = ''
       return
     }
-    const reader = new FileReader()
-    reader.onload = () => {
-      try {
-        const data = new Uint8Array(reader.result as ArrayBuffer)
-        const wb = XLSX.read(data, { type: 'array' })
-        const sheet = wb.Sheets[wb.SheetNames[0]]
-        const rows: string[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as string[][]
-        const text = rows.map(r => r.join(',')).join('\n')
-        setPasteText(text)
-        const wells = parseCSVData(text)
-        setRawData(wells)
-        setSelectedWells(new Set(wells.map(w => w.wellId)))
-        setErrors([])
-      } catch (error) {
-        setRawData([])
-        setSelectedWells(new Set())
-        setErrors([error instanceof Error ? error.message : 'Invalid Excel file. Please check your data.'])
-      }
+    try {
+      const wells = await parseExcel(file, timeRange)
+      const text = wells.map(w => [w.wellId, ...w.timePoints].join(',')).join('\n')
+      setPasteText(text)
+      const parsed = parseCSVData(text)
+      setRawData(parsed)
+      setSelectedWells(new Set(parsed.map(w => w.wellId)))
+      setErrors([])
+    } catch (error) {
+      setRawData([])
+      setSelectedWells(new Set())
+      setErrors([error instanceof Error ? error.message : 'Invalid Excel file. Please check your data.'])
     }
-    reader.readAsArrayBuffer(file)
     e.target.value = ''
-  }, [parseCSVData, setRawData, setErrors, setSelectedWells])
+  }, [parseCSVData, setRawData, setErrors, setSelectedWells, timeRange])
 
   const handleClear = useCallback(() => {
     setPasteText('')

@@ -95,7 +95,7 @@ You can copy and paste either data to see the application in action.
 ## Data Format
 
 The application expects CSV or Excel data with:
-Excel files (`.xlsx` or `.xls`) should contain the same columns as the CSV format.
+Excel files (`.xlsx` or `.xls`) should contain the same columns as the CSV format. The data is read from the **"Table All Cycles"** sheet. The first 10 rows and the second column are ignored.
 - First column: Well ID (supports both A1-H12 and A01-H12 formats)
 - Subsequent columns: Measurement values (no time column needed)
 - Number of data points must match the time range setting
@@ -123,6 +123,7 @@ H12,0.567,0.678,0.789,0.890,0.901,1.012,1.123,1.234,1.345,1.456,1.567,1.678,1.78
 ### File Handling
 
 Uploaded Excel files are read directly in the browser and are never stored externally. Files up to **1&nbsp;MB** are accepted; larger files will be rejected. Data is converted to CSV text and processed entirely in memory, so no additional storage is required.
+If the selected time range exceeds the number of minutes available in the Excel file, an error is shown.
 
 ## Algorithms
 
