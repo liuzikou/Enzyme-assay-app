@@ -5,7 +5,7 @@ A production-ready, browser-based application for analyzing enzyme reaction kine
 ## Features
 
 - **Three Assay Types**: T2943, S2251, and HoFF with specific algorithms
-- **Real-time Data Processing**: Paste CSV data and get instant results
+- **Real-time Data Processing**: Paste CSV or upload Excel data and get instant results
 - **Interactive Well Selection**: 96-well plate grid for selecting wells and controls
 - **Time Series Visualization**: Sparkline charts for each well
 - **Results Table**: Sortable table with summary statistics
@@ -75,7 +75,7 @@ src/
 ## Usage
 
 1. **Select Assay Type**: Choose between T2943, S2251, or HoFF
-2. **Paste CSV Data**: Paste your 96-well plate data in CSV format
+2. **Paste or Upload Data**: Paste CSV data or upload Excel (xlsx/xls) files in the same format
 3. **Select Wells**: Use the well selector to choose wells for analysis
 4. **Configure Controls**: For S2251 and HoFF, select control wells
 5. **Set Parameters**: Adjust time range and smoothing window
@@ -94,7 +94,8 @@ You can copy and paste either data to see the application in action.
 
 ## Data Format
 
-The application expects CSV data with:
+The application expects CSV or Excel data with:
+Excel files (`.xlsx` or `.xls`) should contain the same columns as the CSV format.
 - First column: Well ID (supports both A1-H12 and A01-H12 formats)
 - Subsequent columns: Measurement values (no time column needed)
 - Number of data points must match the time range setting
