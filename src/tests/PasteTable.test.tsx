@@ -100,8 +100,31 @@ describe('PasteTable', () => {
 
   it('updates placeholder text based on time range', () => {
     render(<PasteTable />)
-    
+
     const textarea = screen.getByRole('textbox')
     expect(textarea).toHaveAttribute('placeholder', expect.stringContaining('30 data points (0-29 minutes)'))
   })
-}) 
+
+  it('shows preview table after valid input', () => {
+    const mockStore: any = {
+      rawData: [],
+      timeRange: [0, 30],
+      errors: [],
+      setRawData: (data: any) => {
+        mockStore.rawData = data
+      },
+      setErrors: mockSetErrors,
+      setSelectedWells: mockSetSelectedWells
+    }
+    ;(useAssayStore as any).mockReturnValue(mockStore)
+    const { rerender } = render(<PasteTable />)
+
+    const textarea = screen.getByRole('textbox')
+    const testData = `A1,${Array.from({ length: 30 }, (_, i) => i + 1).join(',')}`
+    fireEvent.change(textarea, { target: { value: testData } })
+
+    rerender(<PasteTable />)
+
+    expect(screen.getByRole('table')).toBeInTheDocument()
+  })
+})

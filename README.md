@@ -76,13 +76,14 @@ src/
 
 1. **Select Assay Type**: Choose between T2943, S2251, or HoFF
 2. **Paste CSV Data**: Paste your 96-well plate data in CSV format
-3. **Select Wells**: Use the well selector to choose wells for analysis
-4. **Configure Controls**: For S2251 and HoFF, select control wells
-5. **Set Parameters**: Adjust time range and smoothing window
-6. **Calculate**: Click calculate to run the analysis
-7. **View Results**: See the calculated metrics for each well
-8. **Visualize Data**: View time series plots for all wells
-9. **Export Results**: Download results in CSV or XLSX format
+3. **Preview Parsed Data**: A small table shows the first few wells and time points
+4. **Select Wells**: Use the well selector to choose wells for analysis
+5. **Configure Controls**: For S2251 and HoFF, select control wells
+6. **Set Parameters**: Adjust time range and smoothing window
+7. **Calculate**: Click calculate to run the analysis
+8. **View Results**: See the calculated metrics for each well
+9. **Visualize Data**: View time series plots for all wells
+10. **Export Results**: Download results in CSV or XLSX format
 
 ### Sample Data
 
