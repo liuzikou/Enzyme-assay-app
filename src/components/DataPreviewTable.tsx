@@ -9,8 +9,8 @@ interface DataPreviewTableProps {
 
 export const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
   data,
-  maxWells = 5,
-  maxPoints = 5
+  maxWells = 100,
+  maxPoints = 120
 }) => {
   const wells = data.slice(0, maxWells)
   const showEllipsisRows = data.length > maxWells
