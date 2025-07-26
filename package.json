@@ -15,7 +15,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
     "prepare": "husky install",
     "ci-local": "./ci-local.sh",
-    "quick-check": "./quick-check.sh",
+    "quick-check": "npm run type-check && npm run lint",
     "last-fail": "./last-fail.sh"
   },
   "dependencies": {
