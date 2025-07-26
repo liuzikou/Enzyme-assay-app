@@ -3,7 +3,7 @@ import { HomePage } from './pages/HomePage'
 
 function App() {
   return (
-    <Router basename="/Enzyme-assay-app">
+    <Router basename="/">
       <div className="min-h-screen bg-gray-50">
         <Routes>
           <Route path="/" element={<HomePage />} />

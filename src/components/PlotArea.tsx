@@ -1,5 +1,5 @@
 import React from 'react'
-import { Sparkline } from './Sparkline'
+import { ChartJsSparkline } from './ChartJsSparkline'
 import { useAssayStore } from '../features/hooks'
 
 export const PlotArea: React.FC = () => {
@@ -45,8 +45,6 @@ export const PlotArea: React.FC = () => {
   if (globalMaxY <= 0) globalMaxY = 1
   if (!isFinite(globalMinY) || globalMinY < 0) globalMinY = 0
   // 不加padding
-  const yDomainMin = globalMinY
-  const yDomainMax = globalMaxY
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -83,14 +81,13 @@ export const PlotArea: React.FC = () => {
               }
               return (
                 <div key={wellId} className="h-9 flex items-center justify-center">
-                  <Sparkline
+                  <ChartJsSparkline
                     data={data}
                     width={90}
                     height={75}
                     color={color}
                     isSelected={isSelected}
                     onClick={() => handleWellClick(wellId)}
-                    yDomain={[yDomainMin, yDomainMax]}
                     xDomain={data.length > 0 ? data.length - 1 : 1}
                   />
                 </div>
