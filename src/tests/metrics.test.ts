@@ -51,7 +51,7 @@ describe('Basic Function Tests', () => {
 
   it('should handle basic calcT2943', () => {
     const result = calcT2943([[1, 2, 3], [1, 2, 3]], 2)
-    expect(typeof result).toBe('number')
+    expect(typeof result.result).toBe('number')
   })
 
   it('should handle basic calcS2251', () => {
