@@ -12,7 +12,7 @@ export const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <AppHeader />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-4 py-8">
         {/* 错误提示 */}
         {errors.length > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">

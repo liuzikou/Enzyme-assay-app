@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAssayStore, AssayType, HoFFMetric } from '../features/hooks'
 import { WellGrid } from './WellGrid'
 import { PasteTable } from './PasteTable'
@@ -12,7 +12,6 @@ export const InputPanel: React.FC = () => {
     selectedWells,
     control0Wells,
     control100Wells,
-    showWellSelector,
     showControlSelector,
     setAssayType,
     setTimeRange,
@@ -21,12 +20,13 @@ export const InputPanel: React.FC = () => {
     setSelectedWells,
     setControl0Wells,
     setControl100Wells,
-    setShowWellSelector,
     setShowControlSelector,
     calculate,
     isLoading,
     rawData
   } = useAssayStore()
+  
+  const [isWellSelectorCollapsed, setIsWellSelectorCollapsed] = useState(false)
 
   const handleWellToggle = (wellId: string) => {
     const newSelected = new Set(selectedWells)
@@ -70,41 +70,10 @@ export const InputPanel: React.FC = () => {
           onChange={(e) => setAssayType(e.target.value as AssayType)}
           className="input-field"
         >
-          <option value="T2943">T2943 - tPA Catalytic Rate</option>
-          <option value="S2251">S2251 - Plasmin Generation Rate</option>
-          <option value="HoFF">HoFF Test</option>
+          <option value="T2943">tPA catalytic rate</option>
+          <option value="S2251">Plasmin generation rate</option>
+          <option value="HoFF">HoFF</option>
         </select>
-      </div>
-
-      {/* Well Selection */}
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Select Wells
-          </label>
-          <button
-            onClick={() => setShowWellSelector(!showWellSelector)}
-            className="btn-secondary text-sm"
-          >
-            {showWellSelector ? 'Hide' : 'Show'} Well Selector
-          </button>
-        </div>
-        
-        {showWellSelector && (
-          <div className="border rounded-lg p-4 bg-gray-50">
-            <WellGrid
-              selected={selectedWells}
-              onChange={handleWellToggle}
-              mode="wells"
-            />
-          </div>
-        )}
-        
-        {!showWellSelector && (
-          <p className="text-sm text-gray-600">
-            Selected: {selectedWells.size} wells
-          </p>
-        )}
       </div>
 
       {/* Control Wells (for S2251 and HoFF) */}
@@ -178,7 +147,7 @@ export const InputPanel: React.FC = () => {
               <span>120</span>
             </div>
             <div className="text-sm text-gray-700 mt-1">
-              Duration: {timeRange[1]} min (0 ~ {timeRange[1] - 1}), {timeRange[1]} samples
+              Duration: 0~{timeRange[1] - 1} min, {timeRange[1]} Time Points
             </div>
           </div>
         </div>
@@ -190,7 +159,7 @@ export const InputPanel: React.FC = () => {
           <input
             type="number"
             value={smoothingWindow}
-            onChange={(e) => setSmoothingWindow(parseInt(e.target.value) || 3)}
+            onChange={(e) => setSmoothingWindow(parseInt(e.target.value) || 10)}
             className="input-field"
             min="1"
             max="10"
@@ -220,6 +189,33 @@ export const InputPanel: React.FC = () => {
       {/* Data Input */}
       <div>
         <PasteTable />
+      </div>
+
+      {/* Well Selection - Moved after data input */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Select Wells ({selectedWells.size} selected)
+          </label>
+          <button
+            onClick={() => setIsWellSelectorCollapsed(!isWellSelectorCollapsed)}
+            className="text-gray-500 hover:text-gray-700 transition-transform duration-200"
+            style={{ transform: isWellSelectorCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+        {!isWellSelectorCollapsed && (
+          <div className="border rounded-lg p-4 bg-gray-50">
+            <WellGrid
+              selected={selectedWells}
+              onChange={handleWellToggle}
+              mode="wells"
+            />
+          </div>
+        )}
       </div>
 
       {/* Actions */}

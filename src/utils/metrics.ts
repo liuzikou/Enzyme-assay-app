@@ -16,16 +16,17 @@ export function diffArray(arr: number[], order: number = 1): number[] {
 
 /**
  * Calculate moving average with specified window size
+ * Only returns values where the full window is available
  */
 export function movingAvg(arr: number[], window: number): number[] {
   if (window <= 0 || arr.length === 0) return []
   if (window === 1) return [...arr]
+  if (window > arr.length) return [] // Window larger than array
   
   const result = []
-  for (let i = 0; i < arr.length; i++) {
-    const start = Math.max(0, i - Math.floor(window / 2))
-    const end = Math.min(arr.length, i + Math.floor(window / 2) + 1)
-    const slice = arr.slice(start, end)
+  // Only calculate for positions where the full window is available
+  for (let i = 0; i <= arr.length - window; i++) {
+    const slice = arr.slice(i, i + window)
     
     if (slice.length === 0) {
       result.push(0)
@@ -39,7 +40,156 @@ export function movingAvg(arr: number[], window: number): number[] {
 }
 
 /**
- * Calculate mean of duplicate measurements
+ * Calculate mean of duplicate measurements from adjacent wells
+ * @param wellId The current well ID (e.g., "A1")
+ * @param rawData All well data
+ * @returns Array of mean values for each time point, or null if no duplicate found
+ */
+export function meanDuplicateFromAdjacentWells(wellId: string, rawData: { wellId: string; timePoints: number[] }[]): number[] | null {
+  // Parse well ID to get row and column
+  const match = wellId.match(/^([A-H])(\d+)$/)
+  if (!match) return null
+  
+  const row = match[1]
+  const col = parseInt(match[2])
+  
+  // Get the first column with data for this row
+  const firstCol = getFirstColumnWithData(row, rawData)
+  if (firstCol === null) return null
+  
+  // Calculate relative position from first column
+  const relativePos = col - firstCol + 1
+  
+  // Only process primary wells (odd relative positions)
+  if (relativePos % 2 === 0) return null
+  
+  // Find the adjacent well (next column)
+  const adjacentCol = col + 1
+  if (adjacentCol > 12) return null // No adjacent well exists
+  
+  const adjacentWellId = `${row}${adjacentCol}`
+  
+  // Find both wells in raw data
+  const currentWell = rawData.find(well => well.wellId === wellId)
+  const adjacentWell = rawData.find(well => well.wellId === adjacentWellId)
+  
+  if (!currentWell || !adjacentWell) return null
+  
+  // Calculate mean of both wells
+  const result = []
+  const length = Math.min(currentWell.timePoints.length, adjacentWell.timePoints.length)
+  
+  for (let i = 0; i < length; i++) {
+    const val1 = currentWell.timePoints[i]
+    const val2 = adjacentWell.timePoints[i]
+    
+    if (isFinite(val1) && isFinite(val2)) {
+      const mean = (val1 + val2) / 2
+      result.push(mean)
+    } else if (isFinite(val1)) {
+      result.push(val1)
+    } else if (isFinite(val2)) {
+      result.push(val2)
+    } else {
+      result.push(0)
+    }
+  }
+  
+  return result
+}
+
+/**
+ * Get the first column that has data for a given row
+ */
+export function getFirstColumnWithData(row: string, rawData: { wellId: string; timePoints: number[] }[]): number | null {
+  for (let col = 1; col <= 12; col++) {
+    const wellId = `${row}${col}`
+    const well = rawData.find(w => w.wellId === wellId)
+    if (well) {
+      return col
+    }
+  }
+  return null
+}
+
+/**
+ * Check if a well is a duplicate well based on data availability
+ */
+export function isDuplicateWell(wellId: string, rawData: { wellId: string; timePoints: number[] }[]): boolean {
+  const match = wellId.match(/^([A-H])(\d+)$/)
+  if (!match) return false
+  
+  const row = match[1]
+  const col = parseInt(match[2])
+  
+  // Get the first column with data for this row
+  const firstCol = getFirstColumnWithData(row, rawData)
+  if (firstCol === null) return false
+  
+  // Calculate relative position from first column
+  const relativePos = col - firstCol + 1
+  return relativePos % 2 === 0 // Even relative positions are duplicate wells
+}
+
+/**
+ * Get the primary well ID for a duplicate well
+ */
+export function getPrimaryWellId(wellId: string, rawData: { wellId: string; timePoints: number[] }[]): string | null {
+  const match = wellId.match(/^([A-H])(\d+)$/)
+  if (!match) return null
+  
+  const row = match[1]
+  const col = parseInt(match[2])
+  
+  // Get the first column with data for this row
+  const firstCol = getFirstColumnWithData(row, rawData)
+  if (firstCol === null) return null
+  
+  // Calculate relative position from first column
+  const relativePos = col - firstCol + 1
+  
+  if (relativePos % 2 === 0) {
+    // This is a duplicate well, return the primary well
+    const primaryCol = col - 1
+    return `${row}${primaryCol}`
+  } else {
+    // This is a primary well
+    return wellId
+  }
+}
+
+/**
+ * Get the adjacent well ID for duplicate measurements
+ */
+export function getAdjacentWellId(wellId: string, rawData: { wellId: string; timePoints: number[] }[]): string | null {
+  const match = wellId.match(/^([A-H])(\d+)$/)
+  if (!match) return null
+  
+  const row = match[1]
+  const col = parseInt(match[2])
+  
+  // Get the first column with data for this row
+  const firstCol = getFirstColumnWithData(row, rawData)
+  if (firstCol === null) return null
+  
+  // Calculate relative position from first column
+  const relativePos = col - firstCol + 1
+  
+  if (relativePos % 2 === 1) {
+    // This is a primary well, get the next column
+    const adjacentCol = col + 1
+    if (adjacentCol > 12) return null
+    return `${row}${adjacentCol}`
+  } else {
+    // This is a duplicate well, get the previous column
+    const adjacentCol = col - 1
+    if (adjacentCol < 1) return null
+    return `${row}${adjacentCol}`
+  }
+}
+
+/**
+ * Calculate mean of duplicate measurements (legacy function for backward compatibility)
  */
 export function meanDuplicate(duplicates: number[][]): number[] {
   if (duplicates.length === 0) return []
@@ -97,22 +247,37 @@ export function normaliseAlexa(data: number[][], alexa0: number, alexa100: numbe
 }
 
 /**
- * Calculate T2943 - tPA Catalytic Rate
+ * Calculate T2943 - tPA Catalytic Rate with debug information
  */
-export function calcT2943(duplicate: number[][], window: number): number {
-  if (duplicate.length === 0 || window <= 0) return 0
+export function calcT2943(duplicate: number[][], window: number, debug: boolean = false, preCalculatedMean?: number[]): { result: number; debug?: { mean: number[]; diff: number[]; smooth: number[]; maxVal: number } } {
+  if (duplicate.length === 0 || window <= 0) return { result: 0 }
   
-  const mean = meanDuplicate(duplicate)
-  if (mean.length === 0) return 0
+  // Use pre-calculated mean if provided, otherwise calculate from duplicate data
+  const mean = preCalculatedMean || meanDuplicate(duplicate)
+  if (mean.length === 0) return { result: 0 }
   
   const dAbs = diffArray(mean, 1)
-  if (dAbs.length === 0) return 0
+  if (dAbs.length === 0) return { result: 0 }
   
   const smooth = movingAvg(dAbs, window)
-  if (smooth.length === 0) return 0
+  if (smooth.length === 0) return { result: 0 }
   
   const maxVal = Math.max(...smooth)
-  return isFinite(maxVal) ? maxVal : 0
+  const result = isFinite(maxVal) ? maxVal : 0
+  
+  if (debug) {
+    return {
+      result,
+      debug: {
+        mean,
+        diff: dAbs,
+        smooth,
+        maxVal
+      }
+    }
+  }
+  
+  return { result }
 }
 
 /**

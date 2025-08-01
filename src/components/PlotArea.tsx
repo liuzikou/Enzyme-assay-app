@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { ChartJsSparkline } from './ChartJsSparkline'
 import { useAssayStore } from '../features/hooks'
 
 export const PlotArea: React.FC = () => {
   const { rawData, selectedWells, results, setSelectedWells } = useAssayStore()
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
   const cols = Array.from({ length: 12 }, (_, i) => i + 1)
@@ -81,22 +82,34 @@ export const PlotArea: React.FC = () => {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Time Series Plots</h3>
+        <div className="flex items-center space-x-2">
+          <h3 className="text-lg font-medium text-gray-900">Time Series Plots</h3>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="text-gray-500 hover:text-gray-700 transition-transform duration-200"
+            style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
         <div className="text-sm text-gray-600">
           {selectedWells.size} wells selected
         </div>
       </div>
 
       {/* Scrollable container */}
-      <div className="overflow-auto">
-        {/* Grid with minimum width to ensure scrolling */}
-        <div 
-          className="grid gap-0 h-[480px]" 
-          style={{ 
-            gridTemplateColumns: `60px repeat(${colsWithData.length}, 90px)`,
-            minWidth: `${60 + (colsWithData.length * 90)}px`
-          }}
-        >
+      {!isCollapsed && (
+        <div className="overflow-auto">
+          {/* Grid with minimum width to ensure scrolling */}
+          <div 
+            className="grid gap-0 h-[480px]" 
+            style={{ 
+              gridTemplateColumns: `60px repeat(${colsWithData.length}, 90px)`,
+              minWidth: `${60 + (colsWithData.length * 90)}px`
+            }}
+          >
           {/* Column headers */}
           <div className="h-8 sticky top-0 bg-white z-10"></div>
           {colsWithData.map(col => (
@@ -154,6 +167,7 @@ export const PlotArea: React.FC = () => {
           ))}
         </div>
       </div>
+      )}
     </div>
   )
 } 

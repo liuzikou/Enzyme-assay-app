@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { z } from 'zod'
-import { calcT2943, calcS2251, calcHoFF, validateWellData } from '../utils/metrics'
+import { calcT2943, calcS2251, calcHoFF, validateWellData, meanDuplicateFromAdjacentWells, isDuplicateWell } from '../utils/metrics'
 
 // Types
 export type AssayType = 'T2943' | 'S2251' | 'HoFF'
@@ -87,7 +87,7 @@ export const useAssayStore = create<AppStore>((set, get) => ({
   // Initial state
   assayType: 'T2943',
   timeRange: [0, 30],
-  smoothingWindow: 3,
+  smoothingWindow: 10,
   hoffMetric: 'MLR',
   
   rawData: [],
@@ -103,9 +103,9 @@ export const useAssayStore = create<AppStore>((set, get) => ({
   showControlSelector: false,
   
   // Precision control
-  sigDigits: 3,
-  incDigits: () => set(s => ({ sigDigits: Math.min(6, s.sigDigits + 1) })),
-  decDigits: () => set(s => ({ sigDigits: Math.max(1, s.sigDigits - 1) })),
+      sigDigits: 5,
+    incDigits: () => set(s => ({ sigDigits: Math.min(6, s.sigDigits + 1) })),
+    decDigits: () => set(s => ({ sigDigits: Math.max(1, s.sigDigits - 1) })),
   
   // Actions
   setAssayType: (type) => set({ assayType: type }),
@@ -150,73 +150,122 @@ export const useAssayStore = create<AppStore>((set, get) => ({
         const wellData = state.rawData.find(well => well.wellId === wellId)
         if (!wellData) continue
         
+        // Skip duplicate wells - they will be handled by their primary wells
+        if (isDuplicateWell(wellId, state.rawData)) {
+          results.push({
+            wellId,
+            value: 0,
+            isValid: false
+          })
+          continue
+        }
+        
         try {
           let value = 0
           
-          switch (state.assayType) {
-            case 'T2943': {
-              // For T2943, we need duplicate measurements
-              // For now, we'll use the single measurement as duplicate
-              const duplicateT2943 = [wellData.timePoints, wellData.timePoints]
-              value = calcT2943(duplicateT2943, state.smoothingWindow)
-              break
+          // Get duplicate data from adjacent well
+          const duplicateData = meanDuplicateFromAdjacentWells(wellId, state.rawData)
+          if (!duplicateData) {
+            // No adjacent well found, use single measurement
+            const singleData = [wellData.timePoints, wellData.timePoints]
+            
+            switch (state.assayType) {
+              case 'T2943': {
+                const calcResult = calcT2943(singleData, state.smoothingWindow)
+                value = calcResult.result
+                break
+              }
+              case 'S2251': {
+                if (state.control0Wells.size === 0) {
+                  throw new Error('No control wells selected for S2251')
+                }
+                const controlData = state.rawData
+                  .filter(well => state.control0Wells.has(well.wellId))
+                  .map(well => well.timePoints)
+                if (controlData.length === 0) {
+                  throw new Error('No control data available')
+                }
+                const bgCtrlS2251 = controlData[0]
+                value = calcS2251(singleData, bgCtrlS2251, state.smoothingWindow)
+                break
+              }
+              case 'HoFF': {
+                if (state.control0Wells.size === 0 || state.control100Wells.size === 0) {
+                  throw new Error('Both 0% and 100% control wells required for HoFF')
+                }
+                const control0Data = state.rawData
+                  .filter(well => state.control0Wells.has(well.wellId))
+                  .map(well => well.timePoints)
+                const control100Data = state.rawData
+                  .filter(well => state.control100Wells.has(well.wellId))
+                  .map(well => well.timePoints)
+                if (control0Data.length === 0 || control100Data.length === 0) {
+                  throw new Error('Control data not available')
+                }
+                const bgCtrlHoFF = control0Data[0]
+                const alexa0 = control0Data[0][0] || 0
+                const alexa100 = control100Data[0][0] || 100
+                value = calcHoFF({
+                  duplicate: singleData,
+                  bgCtrl: bgCtrlHoFF,
+                  metric: state.hoffMetric,
+                  window: state.smoothingWindow,
+                  alexa0,
+                  alexa100
+                })
+                break
+              }
             }
-              
-            case 'S2251': {
-              // For S2251, we need background control
-              if (state.control0Wells.size === 0) {
-                throw new Error('No control wells selected for S2251')
+          } else {
+            // Use duplicate data from adjacent wells
+            const duplicateArray = [wellData.timePoints, duplicateData]
+            
+            switch (state.assayType) {
+              case 'T2943': {
+                const calcResult = calcT2943(duplicateArray, state.smoothingWindow, false, duplicateData)
+                value = calcResult.result
+                break
               }
-              
-              // Calculate background control mean
-              const controlData = state.rawData
-                .filter(well => state.control0Wells.has(well.wellId))
-                .map(well => well.timePoints)
-              
-              if (controlData.length === 0) {
-                throw new Error('No control data available')
+              case 'S2251': {
+                if (state.control0Wells.size === 0) {
+                  throw new Error('No control wells selected for S2251')
+                }
+                const controlData = state.rawData
+                  .filter(well => state.control0Wells.has(well.wellId))
+                  .map(well => well.timePoints)
+                if (controlData.length === 0) {
+                  throw new Error('No control data available')
+                }
+                const bgCtrlS2251 = controlData[0]
+                value = calcS2251(duplicateArray, bgCtrlS2251, state.smoothingWindow)
+                break
               }
-              
-              // Use first control as background
-              const bgCtrlS2251 = controlData[0]
-              const duplicateS2251 = [wellData.timePoints, wellData.timePoints]
-              value = calcS2251(duplicateS2251, bgCtrlS2251, state.smoothingWindow)
-              break
-            }
-              
-            case 'HoFF': {
-              // For HoFF, we need both control types
-              if (state.control0Wells.size === 0 || state.control100Wells.size === 0) {
-                throw new Error('Both 0% and 100% control wells required for HoFF')
+              case 'HoFF': {
+                if (state.control0Wells.size === 0 || state.control100Wells.size === 0) {
+                  throw new Error('Both 0% and 100% control wells required for HoFF')
+                }
+                const control0Data = state.rawData
+                  .filter(well => state.control0Wells.has(well.wellId))
+                  .map(well => well.timePoints)
+                const control100Data = state.rawData
+                  .filter(well => state.control100Wells.has(well.wellId))
+                  .map(well => well.timePoints)
+                if (control0Data.length === 0 || control100Data.length === 0) {
+                  throw new Error('Control data not available')
+                }
+                const bgCtrlHoFF = control0Data[0]
+                const alexa0 = control0Data[0][0] || 0
+                const alexa100 = control100Data[0][0] || 100
+                value = calcHoFF({
+                  duplicate: duplicateArray,
+                  bgCtrl: bgCtrlHoFF,
+                  metric: state.hoffMetric,
+                  window: state.smoothingWindow,
+                  alexa0,
+                  alexa100
+                })
+                break
               }
-              
-              // Calculate control means
-              const control0Data = state.rawData
-                .filter(well => state.control0Wells.has(well.wellId))
-                .map(well => well.timePoints)
-              
-              const control100Data = state.rawData
-                .filter(well => state.control100Wells.has(well.wellId))
-                .map(well => well.timePoints)
-              
-              if (control0Data.length === 0 || control100Data.length === 0) {
-                throw new Error('Control data not available')
-              }
-              
-              const bgCtrlHoFF = control0Data[0]
-              const alexa0 = control0Data[0][0] || 0
-              const alexa100 = control100Data[0][0] || 100
-              const duplicateHoFF = [wellData.timePoints, wellData.timePoints]
-              
-              value = calcHoFF({
-                duplicate: duplicateHoFF,
-                bgCtrl: bgCtrlHoFF,
-                metric: state.hoffMetric,
-                window: state.smoothingWindow,
-                alexa0,
-                alexa100
-              })
-              break
             }
           }
           

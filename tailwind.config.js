@@ -8,6 +8,9 @@ export default {
     extend: {
       colors: {
         accent: '#2258cf',
+      },
+      gridTemplateColumns: {
+        '13': 'repeat(13, minmax(0, 1fr))',
       }
     },
   },
