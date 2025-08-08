@@ -92,8 +92,8 @@ export const useAssayStore = create<AppStore>((set, get) => ({
   
   rawData: [],
   selectedWells: new Set(),
-  control0Wells: new Set(['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10', 'A11', 'A12']),
-  control100Wells: new Set(['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'H11', 'H12']),
+  control0Wells: new Set(['A1', 'A2']),
+  control100Wells: new Set(['H1', 'H2']),
   
   results: [],
   isLoading: false,

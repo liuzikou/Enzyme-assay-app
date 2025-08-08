@@ -178,10 +178,10 @@ export const InputPanel: React.FC = () => {
             onChange={(e) => setHoffMetric(e.target.value as HoFFMetric)}
             className="input-field"
           >
-            <option value="HLT">HLT - Half-Life Time</option>
-            <option value="MLR">MLR - Maximum Linear Rate</option>
-            <option value="TMLR">TMLR - Time to Maximum Linear Rate</option>
-            <option value="FI">FI - Fibrin Index</option>
+            <option value="HLT">HLT - Half lysis time</option>
+            <option value="MLR">MLR - Max lysis rate</option>
+            <option value="TMLR">TMLR - Time of Max Lysis Rate</option>
+            <option value="FI">FI - Fibrinolysis index</option>
           </select>
         </div>
       )}

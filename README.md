@@ -137,8 +137,8 @@ If the selected time range exceeds the number of minutes available in the Excel 
 - Calculates generation rate from background-subtracted data
 
 ### HoFF Test
-- Requires both 0% and 100% control wells
-- Supports four metrics: HLT, MLR, TMLR, FI
+- Requires both 0% and 100% control wells (2 wells each)
+- Supports four metrics: HLT (Half lysis time), MLR (Max lysis rate), TMLR (Time of Max Lysis Rate), FI (Fibrinolysis index)
 
 ## Development
 
