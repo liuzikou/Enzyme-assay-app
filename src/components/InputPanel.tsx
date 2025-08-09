@@ -27,19 +27,32 @@ export const InputPanel: React.FC = () => {
   const [isWellSelectorCollapsed, setIsWellSelectorCollapsed] = useState(false)
   const [wellSelectionMode, setWellSelectionMode] = useState<'sample' | 'control0' | 'control100'>('sample')
 
+  // Traditional well toggle for T2943 (simple selection without control logic)
+  const handleSimpleWellToggle = (wellId: string) => {
+    const newSelected = new Set(selectedWells)
+    if (newSelected.has(wellId)) {
+      newSelected.delete(wellId)
+    } else {
+      newSelected.add(wellId)
+    }
+    setSelectedWells(newSelected)
+  }
+
   const handleCombinedWellToggle = (wellId: string) => {
     // Handle well selection based on current mode
     if (wellSelectionMode === 'sample') {
-      // Remove from control wells if present
-      if (control0Wells.has(wellId)) {
-        const newControl0 = new Set(control0Wells)
-        newControl0.delete(wellId)
-        setControl0Wells(newControl0)
-      }
-      if (control100Wells.has(wellId)) {
-        const newControl100 = new Set(control100Wells)
-        newControl100.delete(wellId)
-        setControl100Wells(newControl100)
+      // For assays that use control wells, remove from control wells if present
+      if (assayType === 'S2251' || assayType === 'HoFF') {
+        if (control0Wells.has(wellId)) {
+          const newControl0 = new Set(control0Wells)
+          newControl0.delete(wellId)
+          setControl0Wells(newControl0)
+        }
+        if (control100Wells.has(wellId)) {
+          const newControl100 = new Set(control100Wells)
+          newControl100.delete(wellId)
+          setControl100Wells(newControl100)
+        }
       }
       // Toggle sample wells
       const newSelected = new Set(selectedWells)
@@ -49,7 +62,7 @@ export const InputPanel: React.FC = () => {
         newSelected.add(wellId)
       }
       setSelectedWells(newSelected)
-    } else if (wellSelectionMode === 'control0') {
+    } else if (wellSelectionMode === 'control0' && (assayType === 'S2251' || assayType === 'HoFF')) {
       // Remove from control100 if present
       if (control100Wells.has(wellId)) {
         const newControl100 = new Set(control100Wells)
@@ -68,7 +81,7 @@ export const InputPanel: React.FC = () => {
       }
       setControl0Wells(newControl0)
       setSelectedWells(newSelected)
-    } else if (wellSelectionMode === 'control100') {
+    } else if (wellSelectionMode === 'control100' && assayType === 'HoFF') {
       // Remove from control0 if present
       if (control0Wells.has(wellId)) {
         const newControl0 = new Set(control0Wells)
@@ -178,54 +191,68 @@ export const InputPanel: React.FC = () => {
         </div>
         {!isWellSelectorCollapsed && (
           <div className="space-y-4">
-            {/* Selection Mode Buttons */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setWellSelectionMode('sample')}
-                className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
-                  wellSelectionMode === 'sample'
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Sample Wells
-              </button>
-              {(assayType === 'S2251' || assayType === 'HoFF') && (
-                <button
-                  onClick={() => setWellSelectionMode('control0')}
-                  className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
-                    wellSelectionMode === 'control0'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  0% Control
-                </button>
-              )}
-              {assayType === 'HoFF' && (
-                <button
-                  onClick={() => setWellSelectionMode('control100')}
-                  className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
-                    wellSelectionMode === 'control100'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  100% Control
-                </button>
-              )}
-            </div>
+            {/* For T2943: Simple well selection */}
+            {assayType === 'T2943' && (
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <WellGrid
+                  selected={selectedWells}
+                  onChange={handleSimpleWellToggle}
+                  mode="wells"
+                />
+              </div>
+            )}
             
-            {/* Well Grid */}
-            <div className="border rounded-lg p-4 bg-gray-50">
-              <WellGrid
-                selected={selectedWells}
-                onChange={handleCombinedWellToggle}
-                control0Wells={control0Wells}
-                control100Wells={control100Wells}
-                mode="combined"
-              />
-            </div>
+            {/* For S2251 and HoFF: Combined selection with control wells */}
+            {(assayType === 'S2251' || assayType === 'HoFF') && (
+              <>
+                {/* Selection Mode Buttons */}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setWellSelectionMode('sample')}
+                    className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                      wellSelectionMode === 'sample'
+                        ? 'bg-purple-500 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Sample Wells
+                  </button>
+                  <button
+                    onClick={() => setWellSelectionMode('control0')}
+                    className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                      wellSelectionMode === 'control0'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    0% Control
+                  </button>
+                  {assayType === 'HoFF' && (
+                    <button
+                      onClick={() => setWellSelectionMode('control100')}
+                      className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                        wellSelectionMode === 'control100'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      100% Control
+                    </button>
+                  )}
+                </div>
+                
+                {/* Well Grid */}
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <WellGrid
+                    selected={selectedWells}
+                    onChange={handleCombinedWellToggle}
+                    control0Wells={control0Wells}
+                    control100Wells={control100Wells}
+                    mode="combined"
+                  />
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
