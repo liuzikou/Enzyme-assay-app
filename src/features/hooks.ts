@@ -164,9 +164,11 @@ export const useAssayStore = create<AppStore>((set, get) => ({
           
           switch (state.assayType) {
             case 'T2943': {
-              // For T2943, use original duplicate array format
+              // For T2943, use original duplicate array format and calling pattern
               const t2943Data = duplicateData ? [wellData.timePoints, duplicateData] : [wellData.timePoints, wellData.timePoints]
-              const calcResult = calcT2943(t2943Data, state.smoothingWindow)
+              const calcResult = duplicateData 
+                ? calcT2943(t2943Data, state.smoothingWindow, false, duplicateData)
+                : calcT2943(t2943Data, state.smoothingWindow)
               value = calcResult.result
               break
             }
