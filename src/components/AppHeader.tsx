@@ -11,7 +11,7 @@ export const AppHeader: React.FC = () => {
       case 'S2251':
         return 'Plasmin Generation Rate Analysis'
       case 'HoFF':
-        return 'HoFF Test Analysis'
+        return 'HoFF'
       default:
         return 'Enzyme Assay Analysis'
     }

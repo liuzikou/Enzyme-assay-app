@@ -4,6 +4,7 @@ import { InputPanel } from '../components/InputPanel'
 import { PlotArea } from '../components/PlotArea'
 import PlateResultsGrid from '../components/PlateResultsGrid'
 import { ExportActions } from '../components/ExportActions'
+
 import { useAssayStore } from '../features/hooks'
 
 export const HomePage: React.FC = () => {
@@ -31,6 +32,7 @@ export const HomePage: React.FC = () => {
           <InputPanel />
           {/* Time Series Plots */}
           <PlotArea />
+
           {/* Result Table */}
           <PlateResultsGrid />
           {/* Export Options */}
