@@ -12,7 +12,6 @@ export const InputPanel: React.FC = () => {
     selectedWells,
     control0Wells,
     control100Wells,
-    showControlSelector,
     setAssayType,
     setTimeRange,
     setSmoothingWindow,
@@ -20,42 +19,75 @@ export const InputPanel: React.FC = () => {
     setSelectedWells,
     setControl0Wells,
     setControl100Wells,
-    setShowControlSelector,
     calculate,
     isLoading,
     rawData
   } = useAssayStore()
   
   const [isWellSelectorCollapsed, setIsWellSelectorCollapsed] = useState(false)
+  const [wellSelectionMode, setWellSelectionMode] = useState<'sample' | 'control0' | 'control100'>('sample')
 
-  const handleWellToggle = (wellId: string) => {
-    const newSelected = new Set(selectedWells)
-    if (newSelected.has(wellId)) {
-      newSelected.delete(wellId)
-    } else {
-      newSelected.add(wellId)
+  const handleCombinedWellToggle = (wellId: string) => {
+    // Handle well selection based on current mode
+    if (wellSelectionMode === 'sample') {
+      // Remove from control wells if present
+      if (control0Wells.has(wellId)) {
+        const newControl0 = new Set(control0Wells)
+        newControl0.delete(wellId)
+        setControl0Wells(newControl0)
+      }
+      if (control100Wells.has(wellId)) {
+        const newControl100 = new Set(control100Wells)
+        newControl100.delete(wellId)
+        setControl100Wells(newControl100)
+      }
+      // Toggle sample wells
+      const newSelected = new Set(selectedWells)
+      if (newSelected.has(wellId)) {
+        newSelected.delete(wellId)
+      } else {
+        newSelected.add(wellId)
+      }
+      setSelectedWells(newSelected)
+    } else if (wellSelectionMode === 'control0') {
+      // Remove from control100 if present
+      if (control100Wells.has(wellId)) {
+        const newControl100 = new Set(control100Wells)
+        newControl100.delete(wellId)
+        setControl100Wells(newControl100)
+      }
+      // Toggle control0 wells
+      const newControl0 = new Set(control0Wells)
+      const newSelected = new Set(selectedWells)
+      if (newControl0.has(wellId)) {
+        newControl0.delete(wellId)
+        newSelected.delete(wellId) // Also remove from selectedWells
+      } else {
+        newControl0.add(wellId)
+        newSelected.add(wellId) // Also add to selectedWells for calculation
+      }
+      setControl0Wells(newControl0)
+      setSelectedWells(newSelected)
+    } else if (wellSelectionMode === 'control100') {
+      // Remove from control0 if present
+      if (control0Wells.has(wellId)) {
+        const newControl0 = new Set(control0Wells)
+        newControl0.delete(wellId)
+        setControl0Wells(newControl0)
+      }
+      // Toggle control100 wells
+      const newControl100 = new Set(control100Wells)
+      const newSelected = new Set(selectedWells)
+      if (newControl100.has(wellId)) {
+        newControl100.delete(wellId)
+        newSelected.delete(wellId) // Also remove from selectedWells
+      } else {
+        newControl100.add(wellId)
+        newSelected.add(wellId) // Also add to selectedWells for calculation
+      }
+      setControl100Wells(newControl100)
+      setSelectedWells(newSelected)
     }
-    setSelectedWells(newSelected)
-  }
-
-  const handleControl0Toggle = (wellId: string) => {
-    const newSelected = new Set(control0Wells)
-    if (newSelected.has(wellId)) {
-      newSelected.delete(wellId)
-    } else {
-      newSelected.add(wellId)
-    }
-    setControl0Wells(newSelected)
-  }
-
-  const handleControl100Toggle = (wellId: string) => {
-    const newSelected = new Set(control100Wells)
-    if (newSelected.has(wellId)) {
-      newSelected.delete(wellId)
-    } else {
-      newSelected.add(wellId)
-    }
-    setControl100Wells(newSelected)
   }
 
   return (
@@ -72,57 +104,11 @@ export const InputPanel: React.FC = () => {
         >
           <option value="T2943">tPA catalytic rate</option>
           <option value="S2251">Plasmin generation rate</option>
-          <option value="HoFF">HoFF</option>
+          <option value="HoFF">Fibrinolysis: HoFF test</option>
         </select>
       </div>
 
-      {/* Control Wells (for S2251 and HoFF) */}
-      {(assayType === 'S2251' || assayType === 'HoFF') && (
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Control Wells
-            </label>
-            <button
-              onClick={() => setShowControlSelector(!showControlSelector)}
-              className="btn-secondary text-sm"
-            >
-              {showControlSelector ? 'Hide' : 'Show'} Control Selector
-            </button>
-          </div>
-          
-          {showControlSelector && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border rounded-lg p-4 bg-gray-50">
-                <WellGrid
-                  selected={control0Wells}
-                  onChange={handleControl0Toggle}
-                  mode="control0"
-                />
-              </div>
-              
-              {assayType === 'HoFF' && (
-                <div className="border rounded-lg p-4 bg-gray-50">
-                  <WellGrid
-                    selected={control100Wells}
-                    onChange={handleControl100Toggle}
-                    mode="control100"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-          
-          {!showControlSelector && (
-            <div className="text-sm text-gray-600 space-y-1">
-              <p>0% Control: {control0Wells.size} wells</p>
-              {assayType === 'HoFF' && (
-                <p>100% Control: {control100Wells.size} wells</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+
 
       {/* Parameters */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -167,35 +153,18 @@ export const InputPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* HoFF Metric Selection */}
-      {assayType === 'HoFF' && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Output Metric
-          </label>
-          <select
-            value={hoffMetric}
-            onChange={(e) => setHoffMetric(e.target.value as HoFFMetric)}
-            className="input-field"
-          >
-            <option value="HLT">HLT - Half lysis time</option>
-            <option value="MLR">MLR - Max lysis rate</option>
-            <option value="TMLR">TMLR - Time of Max Lysis Rate</option>
-            <option value="FI">FI - Fibrinolysis index</option>
-          </select>
-        </div>
-      )}
+
 
       {/* Data Input */}
       <div>
         <PasteTable />
       </div>
 
-      {/* Well Selection - Moved after data input */}
+      {/* Well Selection - Combined with Control Wells */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="block text-sm font-medium text-gray-700">
-            Select Wells ({selectedWells.size} selected)
+            Select Wells
           </label>
           <button
             onClick={() => setIsWellSelectorCollapsed(!isWellSelectorCollapsed)}
@@ -208,25 +177,89 @@ export const InputPanel: React.FC = () => {
           </button>
         </div>
         {!isWellSelectorCollapsed && (
-          <div className="border rounded-lg p-4 bg-gray-50">
-            <WellGrid
-              selected={selectedWells}
-              onChange={handleWellToggle}
-              mode="wells"
-            />
+          <div className="space-y-4">
+            {/* Selection Mode Buttons */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setWellSelectionMode('sample')}
+                className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                  wellSelectionMode === 'sample'
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Sample Wells
+              </button>
+              {(assayType === 'S2251' || assayType === 'HoFF') && (
+                <button
+                  onClick={() => setWellSelectionMode('control0')}
+                  className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                    wellSelectionMode === 'control0'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  0% Control
+                </button>
+              )}
+              {assayType === 'HoFF' && (
+                <button
+                  onClick={() => setWellSelectionMode('control100')}
+                  className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                    wellSelectionMode === 'control100'
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  100% Control
+                </button>
+              )}
+            </div>
+            
+            {/* Well Grid */}
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <WellGrid
+                selected={selectedWells}
+                onChange={handleCombinedWellToggle}
+                control0Wells={control0Wells}
+                control100Wells={control100Wells}
+                mode="combined"
+              />
+            </div>
           </div>
         )}
       </div>
 
       {/* Actions */}
-      <div className="flex space-x-2 pt-4 border-t">
-        <button
-          onClick={calculate}
-          disabled={isLoading || selectedWells.size === 0 || rawData.length === 0}
-          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? 'Calculating...' : 'Calculate'}
-        </button>
+      <div className="flex items-center justify-between pt-4 border-t">
+        <div className="flex space-x-2">
+          <button
+            onClick={calculate}
+            disabled={isLoading || selectedWells.size === 0 || rawData.length === 0}
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Calculating...' : 'Calculate'}
+          </button>
+        </div>
+        
+        {/* HoFF Output Metric Selection */}
+        {assayType === 'HoFF' && (
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">
+              Output Metric:
+            </label>
+            <select
+              value={hoffMetric}
+              onChange={(e) => setHoffMetric(e.target.value as HoFFMetric)}
+              className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+            >
+              <option value="HLT">Half Lysis Time (HLT)</option>
+              <option value="MLR">Max Lysis Rate (MLR)</option>
+              <option value="TMLR">Time of Max Lysis Rate (TMLR)</option>
+              <option value="FI">Fibrinolysis Index (FI)</option>
+            </select>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -11,6 +11,7 @@ const PlateResultsGrid = memo(() => {
   const incDigits = useAssayStore(s => s.incDigits);
   const decDigits = useAssayStore(s => s.decDigits);
   const rawData = useAssayStore(s => s.rawData);
+  const selectedWells = useAssayStore(s => s.selectedWells);
   // Map results to a lookup table for O(1) access
   const resultMap = Object.fromEntries(results.map(r => [r.wellId, r.isValid ? r.value : NaN])) as Record<string, number>;
   const hasData = results.length > 0;
@@ -56,6 +57,8 @@ const PlateResultsGrid = memo(() => {
                       return match && parseInt(match[2]) === c;
                     });
                     const isDuplicate = hasDataInRow && hasDataInCol && isDuplicateWell(id, rawData);
+                    // Only show "dup" for wells that are in selectedWells
+                    const showDuplicateLabel = isDuplicate && selectedWells.has(id);
                     
                     return (
                       <td
@@ -64,7 +67,7 @@ const PlateResultsGrid = memo(() => {
                           Number.isFinite(val) ? "text-gray-900" : "text-gray-400"
                         }`}
                       >
-                        {isDuplicate ? "dup" : (Number.isFinite(val) ? val.toFixed(sigDigits) : "—")}
+                        {showDuplicateLabel ? "dup" : (Number.isFinite(val) ? val.toFixed(sigDigits) : "—")}
                       </td>
                     );
                   })}
