@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { z } from 'zod'
-import { calcT2943, calcS2251, calcHoFF, validateWellData, meanDuplicateFromAdjacentWells, isDuplicateWell, getGlobalControlValues, getAveragedControlData } from '../utils/metrics'
+import { calcT2943, calcHoFF, validateWellData, meanDuplicateFromAdjacentWells, isDuplicateWell, getGlobalControlValues, getAveragedControlData } from '../utils/metrics'
+import { calcS2251 } from '../utils/s2251Calculator'
 
 // Types
 export type AssayType = 'T2943' | 'S2251' | 'HoFF'
@@ -90,8 +91,8 @@ export const useAssayStore = create<AppStore>((set, get) => ({
   
   rawData: [],
   selectedWells: new Set(),
-  control0Wells: new Set(['G11', 'G12']),
-  control100Wells: new Set(['H11', 'H12']),
+  control0Wells: new Set(),
+  control100Wells: new Set(),
   
   results: [],
   isLoading: false,
@@ -105,7 +106,14 @@ export const useAssayStore = create<AppStore>((set, get) => ({
     decDigits: () => set(s => ({ sigDigits: Math.max(1, s.sigDigits - 1) })),
   
   // Actions
-  setAssayType: (type) => set({ assayType: type }),
+  setAssayType: (type) => set({ 
+    assayType: type,
+    // Set default smoothing window for S2251
+    smoothingWindow: type === 'S2251' ? 5 : 10,
+    // Set default control wells based on assay type
+    control0Wells: type === 'S2251' ? new Set() : new Set(['G11', 'G12']),
+    control100Wells: type === 'HoFF' ? new Set(['H11', 'H12']) : new Set()
+  }),
   setTimeRange: (range) => set({ timeRange: range }),
   setSmoothingWindow: (window) => set({ smoothingWindow: window }),
   setHoffMetric: (metric) => set({ hoffMetric: metric }),
@@ -174,17 +182,40 @@ export const useAssayStore = create<AppStore>((set, get) => ({
             }
             case 'S2251': {
               if (state.control0Wells.size === 0) {
-                throw new Error('No control wells selected for S2251')
+                throw new Error('No negative control wells selected for S2251')
               }
-              const controlData = state.rawData
-                .filter(well => state.control0Wells.has(well.wellId))
-                .map(well => well.timePoints)
-              if (controlData.length === 0) {
-                throw new Error('No control data available')
+              
+              // Process control wells the same way as sample wells
+              const controlWells = Array.from(state.control0Wells)
+              const primaryControlWell = controlWells[0] // Use first control well as primary
+              const primaryControlData = state.rawData.find(well => well.wellId === primaryControlWell)?.timePoints
+              
+              if (!primaryControlData) {
+                throw new Error('No negative control data available')
               }
-              const bgCtrlS2251 = controlData[0]
-              // For S2251, use original duplicate array format
-              const s2251Data = duplicateData ? [wellData.timePoints, duplicateData] : [wellData.timePoints, wellData.timePoints]
+              
+              // Get duplicate data for control well (if exists)
+              const controlDuplicateData = meanDuplicateFromAdjacentWells(primaryControlWell, state.rawData)
+              
+              // Prepare control data in same format as sample data
+              let bgCtrlS2251: number[][]
+              if (controlDuplicateData) {
+                bgCtrlS2251 = [primaryControlData, controlDuplicateData]
+              } else {
+                bgCtrlS2251 = [primaryControlData]
+              }
+              
+              // For S2251, use correct data format based on new algorithm
+              let s2251Data: number[][]
+              if (duplicateData) {
+                // Use both original and duplicate data
+                s2251Data = [wellData.timePoints, duplicateData]
+              } else {
+                // Use single well data (wrap in array for meanDuplicate function)
+                s2251Data = [wellData.timePoints]
+              }
+              
+              // Use the new S2251 algorithm with smoothing window
               value = calcS2251(s2251Data, bgCtrlS2251, state.smoothingWindow)
               break
             }

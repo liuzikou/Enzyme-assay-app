@@ -225,7 +225,7 @@ export const InputPanel: React.FC = () => {
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
-                    0% Control
+                    {assayType === 'S2251' ? 'Negative Control' : '0% Control'}
                   </button>
                   {assayType === 'HoFF' && (
                     <button
@@ -247,8 +247,9 @@ export const InputPanel: React.FC = () => {
                     selected={selectedWells}
                     onChange={handleCombinedWellToggle}
                     control0Wells={control0Wells}
-                    control100Wells={control100Wells}
+                    control100Wells={assayType === 'HoFF' ? control100Wells : new Set()}
                     mode="combined"
+                    assayType={assayType}
                   />
                 </div>
               </>

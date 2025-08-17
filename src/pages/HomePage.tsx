@@ -4,6 +4,7 @@ import { InputPanel } from '../components/InputPanel'
 import { PlotArea } from '../components/PlotArea'
 import PlateResultsGrid from '../components/PlateResultsGrid'
 import { ExportActions } from '../components/ExportActions'
+import { S2251DebugPanel } from '../components/S2251DebugPanel'
 
 import { useAssayStore } from '../features/hooks'
 
@@ -30,11 +31,15 @@ export const HomePage: React.FC = () => {
         <div className="flex flex-col gap-8">
           {/* Input Area */}
           <InputPanel />
+          
           {/* Time Series Plots */}
           <PlotArea />
 
           {/* Result Table */}
           <PlateResultsGrid />
+          
+          {/* S2251 Debug Panel - Removed as requested */}
+          
           {/* Export Options */}
           <ExportActions />
         </div>

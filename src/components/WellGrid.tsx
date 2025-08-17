@@ -9,6 +9,7 @@ interface WellGridProps {
   onControl100Change?: (wellId: string) => void
   mode?: 'wells' | 'control0' | 'control100' | 'combined'
   disabled?: boolean
+  assayType?: 'T2943' | 'S2251' | 'HoFF'
 }
 
 export const WellGrid: React.FC<WellGridProps> = ({
@@ -17,7 +18,8 @@ export const WellGrid: React.FC<WellGridProps> = ({
   control0Wells = new Set(),
   control100Wells = new Set(),
   mode = 'wells',
-  disabled = false
+  disabled = false,
+  assayType
 }) => {
   const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
   const cols = Array.from({ length: 12 }, (_, i) => i + 1)
@@ -58,7 +60,7 @@ export const WellGrid: React.FC<WellGridProps> = ({
   const getModeTitle = () => {
     switch (mode) {
       case 'control0':
-        return '0% Control Wells'
+        return assayType === 'S2251' ? 'Negative Control Wells' : '0% Control Wells'
       case 'control100':
         return '100% Control Wells'
       case 'combined':
@@ -139,19 +141,22 @@ export const WellGrid: React.FC<WellGridProps> = ({
             </p>
             <p className="flex items-center gap-2">
               <span className="w-4 h-4 bg-blue-500 rounded border"></span>
-              0% Control: {control0Wells.size}
+              {assayType === 'S2251' ? 'Negative Control' : '0% Control'}: {control0Wells.size}
             </p>
-            <p className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-green-500 rounded border"></span>
-              100% Control: {control100Wells.size}
-            </p>
+            {/* Only show 100% Control if there are any control100Wells */}
+            {control100Wells.size > 0 && (
+              <p className="flex items-center gap-2">
+                <span className="w-4 h-4 bg-green-500 rounded border"></span>
+                100% Control: {control100Wells.size}
+              </p>
+            )}
           </div>
         )}
         {mode === 'wells' && (
           <p>Selected: {selected.size} wells</p>
         )}
         {mode === 'control0' && (
-          <p>0% Control: {selected.size} wells</p>
+          <p>{assayType === 'S2251' ? 'Negative Control' : '0% Control'}: {selected.size} wells</p>
         )}
         {mode === 'control100' && (
           <p>100% Control: {selected.size} wells</p>

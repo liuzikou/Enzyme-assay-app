@@ -40,10 +40,10 @@ export function movingAvg(arr: number[], window: number): number[] {
 }
 
 /**
- * Calculate mean of duplicate measurements from adjacent wells
+ * Get duplicate well data from adjacent wells (direct readings, not averaged)
  * @param wellId The current well ID (e.g., "A1")
  * @param rawData All well data
- * @returns Array of mean values for each time point, or null if no duplicate found
+ * @returns Array of duplicate well readings for each time point, or null if no duplicate found
  */
 export function meanDuplicateFromAdjacentWells(wellId: string, rawData: { wellId: string; timePoints: number[] }[]): number[] | null {
   // Parse well ID to get row and column
@@ -69,33 +69,13 @@ export function meanDuplicateFromAdjacentWells(wellId: string, rawData: { wellId
   
   const adjacentWellId = `${row}${adjacentCol}`
   
-  // Find both wells in raw data
-  const currentWell = rawData.find(well => well.wellId === wellId)
+  // Find the adjacent well in raw data
   const adjacentWell = rawData.find(well => well.wellId === adjacentWellId)
   
-  if (!currentWell || !adjacentWell) return null
+  if (!adjacentWell) return null
   
-  // Calculate mean of both wells
-  const result = []
-  const length = Math.min(currentWell.timePoints.length, adjacentWell.timePoints.length)
-  
-  for (let i = 0; i < length; i++) {
-    const val1 = currentWell.timePoints[i]
-    const val2 = adjacentWell.timePoints[i]
-    
-    if (isFinite(val1) && isFinite(val2)) {
-      const mean = (val1 + val2) / 2
-      result.push(mean)
-    } else if (isFinite(val1)) {
-      result.push(val1)
-    } else if (isFinite(val2)) {
-      result.push(val2)
-    } else {
-      result.push(0)
-    }
-  }
-  
-  return result
+  // Return the adjacent well's direct readings (not averaged)
+  return [...adjacentWell.timePoints]
 }
 
 /**
@@ -459,31 +439,124 @@ export function calcT2943(duplicate: number[][], window: number, debug: boolean 
 
 /**
  * Calculate S2251 - Plasmin Generation Rate
+ * New algorithm: Linear regression slope from start to max net-LR position
  */
-export function calcS2251(duplicate: number[][], bgCtrl: number[], window: number): number {
-  if (duplicate.length === 0 || bgCtrl.length === 0 || window <= 0) return 0
+export function calcS2251(duplicate: number[][], bgCtrl: number[]): number {
+  if (duplicate.length === 0 || bgCtrl.length === 0) return 0
   
+  // Step 1: Calculate mean of duplicate wells, or use single well data
   const mean = meanDuplicate(duplicate)
   if (mean.length === 0) return 0
   
-  const dAbs = diffArray(mean, 1)
-  if (dAbs.length === 0) return 0
+  // Step 2: Calculate first-order difference to get Lysis Rate (LR)
+  const lr = diffArray(mean, 1)
+  if (lr.length === 0) return 0
   
-  const smooth = movingAvg(dAbs, window)
-  if (smooth.length === 0) return 0
+  // Step 3: Calculate net-LR by subtracting 0% control LR
+  const bgLr = diffArray(bgCtrl, 1)
+  const netLr = subtractArray(lr, bgLr)
+  if (netLr.length === 0) return 0
   
-  const net = subtractArray(smooth, bgCtrl)
-  if (net.length === 0) return 0
+  // Step 4: Find max net-LR and its position
+  const maxNetLr = Math.max(...netLr)
+  const maxNetLrIndex = netLr.indexOf(maxNetLr)
   
-  const mlr = Math.max(...net)
-  if (!isFinite(mlr)) return 0
+  if (!isFinite(maxNetLr) || maxNetLrIndex <= 0) return 0
   
-  const tmlr = net.indexOf(mlr)
-  if (tmlr <= 0) return 0
+  // Step 5: Calculate linear regression slope from start to max position
+  const x = Array.from({ length: maxNetLrIndex + 1 }, (_, i) => i) // Time points: 0, 1, 2, ...
+  const y = netLr.slice(0, maxNetLrIndex + 1) // Net-LR values up to max position
   
-  const lr0 = net[0] || 0
-  const result = (mlr - lr0) / tmlr
-  return isFinite(result) ? result : 0
+  // Linear regression calculation
+  const n = x.length
+  const sumX = x.reduce((a, b) => a + b, 0)
+  const sumY = y.reduce((a, b) => a + b, 0)
+  const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0)
+  const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0)
+  
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
+  
+  return isFinite(slope) ? slope : 0
+}
+
+/**
+ * Calculate S2251 with detailed debug information
+ */
+export function calcS2251WithDebug(duplicate: number[][], bgCtrl: number[]): {
+  result: number
+  debug: {
+    mean: number[]
+    lr: number[]
+    bgLr: number[]
+    netLr: number[]
+    maxNetLr: number
+    maxNetLrIndex: number
+    regressionSlope: number
+    regressionData: { x: number[], y: number[] }
+  }
+} {
+  // Initialize debug object
+  const debug = {
+    mean: [] as number[],
+    lr: [] as number[],
+    bgLr: [] as number[],
+    netLr: [] as number[],
+    maxNetLr: 0,
+    maxNetLrIndex: -1,
+    regressionSlope: 0,
+    regressionData: { x: [] as number[], y: [] as number[] }
+  }
+
+  if (duplicate.length === 0 || bgCtrl.length === 0) {
+    return { result: 0, debug }
+  }
+  
+  // Step 1: Calculate mean of duplicates
+  debug.mean = meanDuplicate(duplicate)
+  if (debug.mean.length === 0) {
+    return { result: 0, debug }
+  }
+  
+  // Step 2: Calculate first-order difference to get Lysis Rate (LR)
+  debug.lr = diffArray(debug.mean, 1)
+  if (debug.lr.length === 0) {
+    return { result: 0, debug }
+  }
+  
+  // Step 3: Calculate net-LR by subtracting 0% control LR
+  debug.bgLr = diffArray(bgCtrl, 1)
+  debug.netLr = subtractArray(debug.lr, debug.bgLr)
+  if (debug.netLr.length === 0) {
+    return { result: 0, debug }
+  }
+  
+  // Step 4: Find max net-LR and its position
+  debug.maxNetLr = Math.max(...debug.netLr)
+  debug.maxNetLrIndex = debug.netLr.indexOf(debug.maxNetLr)
+  
+  if (!isFinite(debug.maxNetLr) || debug.maxNetLrIndex <= 0) {
+    return { result: 0, debug }
+  }
+  
+  // Step 5: Calculate linear regression slope from start to max position
+  const x = Array.from({ length: debug.maxNetLrIndex + 1 }, (_, i) => i)
+  const y = debug.netLr.slice(0, debug.maxNetLrIndex + 1)
+  
+  debug.regressionData = { x, y }
+  
+  // Linear regression calculation
+  const n = x.length
+  const sumX = x.reduce((a, b) => a + b, 0)
+  const sumY = y.reduce((a, b) => a + b, 0)
+  const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0)
+  const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0)
+  
+  debug.regressionSlope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
+  
+  return { 
+    result: isFinite(debug.regressionSlope) ? debug.regressionSlope : 0, 
+    debug 
+  }
 }
 
 /**

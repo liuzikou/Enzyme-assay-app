@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { useAssayStore } from "../features/hooks"; // Zustand store
 import { isDuplicateWell } from "../utils/metrics";
+import { formatS2251Result } from "../utils/s2251Calculator";
 
 const COLS = Array.from({ length: 12 }, (_, i) => i + 1);
 const ROWS = ["A","B","C","D","E","F","G","H"];
@@ -12,6 +13,7 @@ const PlateResultsGrid = memo(() => {
   const decDigits = useAssayStore(s => s.decDigits);
   const rawData = useAssayStore(s => s.rawData);
   const selectedWells = useAssayStore(s => s.selectedWells);
+  const assayType = useAssayStore(s => s.assayType);
   // Map results to a lookup table for O(1) access
   const resultMap = Object.fromEntries(results.map(r => [r.wellId, r.isValid ? r.value : NaN])) as Record<string, number>;
   const hasData = results.length > 0;
@@ -67,7 +69,9 @@ const PlateResultsGrid = memo(() => {
                           Number.isFinite(val) ? "text-gray-900" : "text-gray-400"
                         }`}
                       >
-                        {showDuplicateLabel ? "dup" : (Number.isFinite(val) ? val.toFixed(sigDigits) : "—")}
+                        {showDuplicateLabel ? "dup" : (Number.isFinite(val) ? 
+                          (assayType === 'S2251' ? formatS2251Result(val, sigDigits) : val.toFixed(sigDigits)) 
+                          : "—")}
                       </td>
                     );
                   })}
