@@ -49,7 +49,65 @@ export const S2251DebugPanel: React.FC = () => {
 
   // Auto-select first well if available and no well is selected
   // Also trigger when results are available
-  React.useEffect(() => {
+    React.useEffect(() => {
+    const calculateDebugInfo = async (wellId: string): Promise<S2251DebugInfo | null> => {
+      try {
+        console.log('Calculating debug info for well:', wellId)
+        
+        const wellData = rawData.find(well => well.wellId === wellId)
+        if (!wellData) {
+          console.log('Well data not found for:', wellId)
+          return null
+        }
+
+        console.log('Found well data, length:', wellData.timePoints.length)
+
+        // Get control data
+        const controlData = rawData
+          .filter(well => control0Wells.has(well.wellId))
+          .map(well => well.timePoints)
+        
+        console.log('Control wells found:', controlData.length)
+        
+        if (controlData.length === 0) {
+          console.log('No control data available')
+          return null
+        }
+        
+        const bgCtrl = controlData[0]
+        console.log('Background control data length:', bgCtrl.length)
+
+        // Get duplicate data
+        const { meanDuplicateFromAdjacentWells } = await import('../utils/metrics')
+        const duplicateData = meanDuplicateFromAdjacentWells(wellId, rawData)
+        console.log('Duplicate data found:', !!duplicateData)
+
+        // Use the new S2251 calculation function
+        const { result: finalResult, debug } = calculateS2251ForWell(
+          wellId,
+          wellData.timePoints,
+          duplicateData,
+          bgCtrl,
+          smoothingWindow
+        )
+        
+        console.log('Calculation completed, result:', finalResult)
+        console.log('Debug info available:', !!debug)
+
+        if (!debug) {
+          console.log('Debug info is null, calculation may have failed')
+          return null
+        }
+
+        return debug
+      } catch (error) {
+        console.error('Error calculating debug info:', error)
+        console.error('Error details:', error instanceof Error ? error.message : String(error))
+        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+        return null
+      }
+    }
+
     const autoCalculate = async () => {
       if (selectedWells.size > 0 && !selectedWellForDebug) {
         // Try to find first well with valid results
@@ -70,7 +128,7 @@ export const S2251DebugPanel: React.FC = () => {
     }
     
     autoCalculate()
-  }, [selectedWells, selectedWellForDebug, results])
+  }, [selectedWells, selectedWellForDebug, results, rawData, control0Wells, smoothingWindow])
 
   // Only show for S2251 assay
   if (assayType !== 'S2251') {
@@ -139,14 +197,74 @@ export const S2251DebugPanel: React.FC = () => {
       return debug
     } catch (error) {
       console.error('Error calculating debug info:', error)
-      console.error('Error details:', error.message)
-      console.error('Error stack:', error.stack)
+      console.error('Error details:', error instanceof Error ? error.message : String(error))
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
       return null
     }
   }
 
   const handleWellSelect = async (wellId: string) => {
     setSelectedWellForDebug(wellId)
+    
+    // Create calculateDebugInfo function for this scope
+    const calculateDebugInfo = async (wellId: string): Promise<S2251DebugInfo | null> => {
+      try {
+        console.log('Calculating debug info for well:', wellId)
+        
+        const wellData = rawData.find(well => well.wellId === wellId)
+        if (!wellData) {
+          console.log('Well data not found for:', wellId)
+          return null
+        }
+
+        console.log('Found well data, length:', wellData.timePoints.length)
+
+        // Get control data
+        const controlData = rawData
+          .filter(well => control0Wells.has(well.wellId))
+          .map(well => well.timePoints)
+        
+        console.log('Control wells found:', controlData.length)
+        
+        if (controlData.length === 0) {
+          console.log('No control data available')
+          return null
+        }
+        
+        const bgCtrl = controlData[0]
+        console.log('Background control data length:', bgCtrl.length)
+
+        // Get duplicate data
+        const { meanDuplicateFromAdjacentWells } = await import('../utils/metrics')
+        const duplicateData = meanDuplicateFromAdjacentWells(wellId, rawData)
+        console.log('Duplicate data found:', !!duplicateData)
+
+        // Use the new S2251 calculation function
+        const { result: finalResult, debug } = calculateS2251ForWell(
+          wellId,
+          wellData.timePoints,
+          duplicateData,
+          bgCtrl,
+          smoothingWindow
+        )
+        
+        console.log('Calculation completed, result:', finalResult)
+        console.log('Debug info available:', !!debug)
+
+        if (!debug) {
+          console.log('Debug info is null, calculation may have failed')
+          return null
+        }
+
+        return debug
+      } catch (error) {
+        console.error('Error calculating debug info:', error)
+        console.error('Error details:', error instanceof Error ? error.message : String(error))
+        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+        return null
+      }
+    }
+    
     const debug = await calculateDebugInfo(wellId)
     setDebugInfo(debug)
   }

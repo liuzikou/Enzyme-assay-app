@@ -141,7 +141,6 @@ export function calcS2251WithDebug(
   }
   
   // Step 4: Calculate net-LR by subtracting negative control smoothed LR
-  let bgLr: number[]
   if (Array.isArray(bgCtrl[0])) {
     // bgCtrl is number[][] - process it like sample data
     const bgMean = meanDuplicate(bgCtrl as number[][])
@@ -257,8 +256,8 @@ export function calculateS2251ForWell(
     return { result: finalResult, debug: debugInfo }
   } catch (error) {
     console.error('Error calculating S2251 for well:', wellId, error)
-    console.error('Error details:', error.message)
-    console.error('Error stack:', error.stack)
+    console.error('Error details:', error instanceof Error ? error.message : String(error))
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     
     // Return a debug info object even on error, with empty arrays
     const errorDebugInfo: S2251DebugInfo = {

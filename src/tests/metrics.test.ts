@@ -6,10 +6,10 @@ import {
   subtractArray,
   normaliseAlexa,
   calcT2943,
-  calcS2251,
   calcHoFF,
   validateWellData
 } from '../utils/metrics'
+import { calcS2251 } from '../utils/s2251Calculator'
 
 describe('Basic Function Tests', () => {
   it('should have all functions defined', () => {

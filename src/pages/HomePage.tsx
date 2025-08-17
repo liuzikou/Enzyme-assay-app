@@ -4,7 +4,7 @@ import { InputPanel } from '../components/InputPanel'
 import { PlotArea } from '../components/PlotArea'
 import PlateResultsGrid from '../components/PlateResultsGrid'
 import { ExportActions } from '../components/ExportActions'
-import { S2251DebugPanel } from '../components/S2251DebugPanel'
+
 
 import { useAssayStore } from '../features/hooks'
 
