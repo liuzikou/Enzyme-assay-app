@@ -2,16 +2,14 @@ import React from 'react'
 import { useAssayStore, AssayType } from '../features/hooks'
 
 export const AppHeader: React.FC = () => {
-  const { assayType, setAssayType } = useAssayStore()
+  const { assayType } = useAssayStore()
 
   const getAssayDescription = (type: AssayType) => {
     switch (type) {
       case 'T2943':
-        return 'tPA Catalytic Rate Analysis'
-      case 'S2251':
-        return 'Plasmin Generation Rate Analysis'
+        return 'tPA Activity Assay'
       case 'HoFF':
-        return 'HoFF'
+        return 'Fibrinolysis: HoFF Test'
       default:
         return 'Enzyme Assay Analysis'
     }
@@ -27,16 +25,7 @@ export const AppHeader: React.FC = () => {
             </h1>
             <div className="h-6 w-px bg-gray-300"></div>
             <div>
-              <select
-                value={assayType}
-                onChange={(e) => setAssayType(e.target.value as AssayType)}
-                className="text-lg font-medium text-accent border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded"
-              >
-                <option value="T2943">T2943</option>
-                <option value="S2251">S2251</option>
-                <option value="HoFF">HoFF</option>
-              </select>
-              <p className="text-sm text-gray-600">
+              <p className="text-lg font-medium text-accent">
                 {getAssayDescription(assayType)}
               </p>
             </div>

@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import { z } from 'zod'
-import { calcT2943, calcS2251, calcHoFF, validateWellData, meanDuplicateFromAdjacentWells, isDuplicateWell, getGlobalControlValues, getAveragedControlData } from '../utils/metrics'
+import { calcT2943, calcHoFF, validateWellData, meanDuplicateFromAdjacentWells, isDuplicateWell, getGlobalControlValues, getAveragedControlData } from '../utils/metrics'
 
 // Types
-export type AssayType = 'T2943' | 'S2251' | 'HoFF'
+export type AssayType = 'HoFF' | 'T2943'
 export type HoFFMetric = 'HLT' | 'MLR' | 'TMLR' | 'FI'
 
 export interface WellData {
@@ -83,15 +83,15 @@ export const plateDataSchema = z.array(wellDataSchema).length(96)
 // Store
 export const useAssayStore = create<AppStore>((set, get) => ({
   // Initial state
-  assayType: 'T2943',
-  timeRange: [0, 30],
+  assayType: 'HoFF',
+  timeRange: [0, 120],
   smoothingWindow: 10,
   hoffMetric: 'HLT',
   
   rawData: [],
   selectedWells: new Set(),
-  control0Wells: new Set(['G11', 'G12']),
-  control100Wells: new Set(['H11', 'H12']),
+  control0Wells: new Set(),
+  control100Wells: new Set(),
   
   results: [],
   isLoading: false,
@@ -172,22 +172,6 @@ export const useAssayStore = create<AppStore>((set, get) => ({
               value = calcResult.result
               break
             }
-            case 'S2251': {
-              if (state.control0Wells.size === 0) {
-                throw new Error('No control wells selected for S2251')
-              }
-              const controlData = state.rawData
-                .filter(well => state.control0Wells.has(well.wellId))
-                .map(well => well.timePoints)
-              if (controlData.length === 0) {
-                throw new Error('No control data available')
-              }
-              const bgCtrlS2251 = controlData[0]
-              // For S2251, use original duplicate array format
-              const s2251Data = duplicateData ? [wellData.timePoints, duplicateData] : [wellData.timePoints, wellData.timePoints]
-              value = calcS2251(s2251Data, bgCtrlS2251, state.smoothingWindow)
-              break
-            }
             case 'HoFF': {
               if (state.control0Wells.size === 0 || state.control100Wells.size === 0) {
                 throw new Error('Both 0% and 100% control wells required for HoFF')
@@ -215,13 +199,21 @@ export const useAssayStore = create<AppStore>((set, get) => ({
                 processedData = [wellData.timePoints]
               }
               
+              console.log(`HoFF calculation for well ${wellId}:`)
+              console.log('  - timeRange:', state.timeRange)
+              console.log('  - totalDuration:', state.timeRange[1])
+              console.log('  - wellData.timePoints.length:', wellData.timePoints.length)
+              console.log('  - duplicateData?.length:', duplicateData?.length)
+              console.log('  - processedData[0].length:', processedData[0].length)
+              
               value = calcHoFF({
                 duplicate: processedData,
                 bgCtrl: bgCtrlHoFF,
                 metric: state.hoffMetric,
                 window: state.smoothingWindow,
                 alexa0,
-                alexa100
+                alexa100,
+                totalDuration: state.timeRange[1]
               })
               break
             }

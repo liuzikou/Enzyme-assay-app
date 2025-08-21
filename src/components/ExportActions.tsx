@@ -6,17 +6,42 @@ import { useAssayStore } from '../features/hooks'
 export const ExportActions: React.FC = () => {
   const { results, assayType, rawData } = useAssayStore()
 
+  // Create plate view data (8x12 grid)
+  const createPlateViewData = () => {
+    const plateData: (string | number)[][] = []
+    
+    // Add header row with column numbers
+    const headerRow = ['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+    plateData.push(headerRow)
+    
+    // Create 8x12 grid
+    for (let row = 0; row < 8; row++) {
+      const rowLetter = String.fromCharCode(65 + row) // A, B, C, ..., H
+      const plateRow: (string | number)[] = [rowLetter]
+      
+      for (let col = 1; col <= 12; col++) {
+        const wellId = `${rowLetter}${col}`
+        const result = results.find(r => r.wellId === wellId)
+        
+        if (result && result.isValid) {
+          plateRow.push(result.value)
+        } else {
+          plateRow.push('')
+        }
+      }
+      plateData.push(plateRow)
+    }
+    
+    return plateData
+  }
+
   const exportToCSV = () => {
     if (results.length === 0) return
 
-    const headers = ['Well ID', 'Value']
-    const csvContent = [
-      headers.join(','),
-      ...results.map(result => [
-        result.wellId,
-        result.isValid ? result.value.toFixed(4) : 'Invalid'
-      ].join(','))
-    ].join('\n')
+    const plateData = createPlateViewData()
+    const csvContent = plateData.map(row => 
+      row.map(cell => typeof cell === 'string' ? cell : cell.toFixed(4)).join(',')
+    ).join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' })
     saveAs(blob, `enzyme_assay_results_${assayType}_${new Date().toISOString().split('T')[0]}.csv`)
@@ -25,12 +50,10 @@ export const ExportActions: React.FC = () => {
   const exportToXLSX = () => {
     if (results.length === 0) return
 
-    const worksheet = XLSX.utils.json_to_sheet(
-      results.map(result => ({
-        'Well ID': result.wellId,
-        'Value': result.isValid ? result.value : 'Invalid'
-      }))
-    )
+    const plateData = createPlateViewData()
+    
+    // Convert to worksheet format
+    const worksheet = XLSX.utils.aoa_to_sheet(plateData)
 
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Results')
@@ -101,7 +124,7 @@ export const ExportActions: React.FC = () => {
       </div>
       
       <div className="mt-4 text-sm text-gray-600">
-        <p>• CSV/XLSX exports include results table only (no summary statistics)</p>
+        <p>• CSV/XLSX exports include results in plate view format (8x12 grid)</p>
         <p>• Raw data export includes all time series data</p>
         <p>• Plot export requires browser screenshot (coming soon)</p>
       </div>

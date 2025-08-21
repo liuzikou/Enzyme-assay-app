@@ -6,7 +6,6 @@ import {
   subtractArray,
   normaliseAlexa,
   calcT2943,
-  calcS2251,
   calcHoFF,
   validateWellData
 } from '../utils/metrics'
@@ -19,7 +18,6 @@ describe('Basic Function Tests', () => {
     expect(typeof subtractArray).toBe('function')
     expect(typeof normaliseAlexa).toBe('function')
     expect(typeof calcT2943).toBe('function')
-    expect(typeof calcS2251).toBe('function')
     expect(typeof calcHoFF).toBe('function')
     expect(typeof validateWellData).toBe('function')
   })
@@ -54,10 +52,7 @@ describe('Basic Function Tests', () => {
     expect(typeof result.result).toBe('number')
   })
 
-  it('should handle basic calcS2251', () => {
-    const result = calcS2251([[1, 2, 3], [1, 2, 3]], [0, 0, 0], 2)
-    expect(typeof result).toBe('number')
-  })
+
 
   it('should handle basic calcHoFF', () => {
     const result = calcHoFF({

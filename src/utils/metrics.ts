@@ -457,34 +457,7 @@ export function calcT2943(duplicate: number[][], window: number, debug: boolean 
   return { result }
 }
 
-/**
- * Calculate S2251 - Plasmin Generation Rate
- */
-export function calcS2251(duplicate: number[][], bgCtrl: number[], window: number): number {
-  if (duplicate.length === 0 || bgCtrl.length === 0 || window <= 0) return 0
-  
-  const mean = meanDuplicate(duplicate)
-  if (mean.length === 0) return 0
-  
-  const dAbs = diffArray(mean, 1)
-  if (dAbs.length === 0) return 0
-  
-  const smooth = movingAvg(dAbs, window)
-  if (smooth.length === 0) return 0
-  
-  const net = subtractArray(smooth, bgCtrl)
-  if (net.length === 0) return 0
-  
-  const mlr = Math.max(...net)
-  if (!isFinite(mlr)) return 0
-  
-  const tmlr = net.indexOf(mlr)
-  if (tmlr <= 0) return 0
-  
-  const lr0 = net[0] || 0
-  const result = (mlr - lr0) / tmlr
-  return isFinite(result) ? result : 0
-}
+
 
 /**
  * Calculate HoFF Test metrics
@@ -496,8 +469,9 @@ export function calcHoFF(options: {
   window: number
   alexa0: number
   alexa100: number
+  totalDuration?: number
 }): number {
-  const { duplicate, bgCtrl, metric, window, alexa0, alexa100 } = options
+  const { duplicate, bgCtrl, metric, window, alexa0, alexa100, totalDuration } = options
   
   if (duplicate.length === 0 || bgCtrl.length === 0 || window <= 0) return 0
   
@@ -531,9 +505,11 @@ export function calcHoFF(options: {
   
   switch (metric) {
     case 'HLT':
-      // If 50% is never reached, return the total experiment time (length of data)
-      // When not reached, return the array length which represents the total experiment duration
-      return hlt >= 0 ? hlt : norm.length
+      // If 50% is never reached, return the total experiment time
+      // Use totalDuration if provided, otherwise use data length
+      const hltResult = hlt >= 0 ? hlt : (totalDuration || norm.length)
+      console.log(`HLT calculation: hlt=${hlt}, norm.length=${norm.length}, totalDuration=${totalDuration}, result=${hltResult}`)
+      return hltResult
     case 'MLR':
       return mlr
     case 'TMLR':

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useAssayStore, WellData } from '../features/hooks'
 import { parseExcel } from '../utils/parseExcel'
 import { DataPreviewTable } from './DataPreviewTable'
@@ -6,6 +6,7 @@ import { DataPreviewTable } from './DataPreviewTable'
 export const PasteTable: React.FC = () => {
   const { rawData, setRawData, setErrors, setSelectedWells, timeRange, errors } = useAssayStore()
   const [pasteText, setPasteText] = useState('')
+  const [originalData, setOriginalData] = useState<string>('') // 存储原始粘贴数据
 
   // 支持多分隔符：逗号、空格、Tab、中文逗号
   const parseCSVData = useCallback((text: string): WellData[] => {
@@ -14,10 +15,11 @@ export const PasteTable: React.FC = () => {
 
     // 根据timeRange生成时间点（每分钟一个采样点）
     const endTime = timeRange[1]
+    console.log('parseCSVData: timeRange =', timeRange, 'endTime =', endTime)
+    console.log('parseCSVData: input text has', lines.length, 'lines')
 
     // Parse data rows
     const wells: WellData[] = []
-    const errors: string[] = []
     
     for (let i = 0; i < lines.length && i < 96; i++) {
       // 支持多分隔符
@@ -25,7 +27,7 @@ export const PasteTable: React.FC = () => {
       const wellIdRaw = line[0]
       
       if (!wellIdRaw) {
-        errors.push(`Empty well ID at line ${i + 1}`)
+        setErrors(prev => [...prev, `Empty well ID at line ${i + 1}`])
         continue
       }
 
@@ -42,12 +44,12 @@ export const PasteTable: React.FC = () => {
       wellId = wellId.charAt(0) + String(Number(wellId.slice(1)))
       
       if (!/^[A-H](?:[1-9]|1[0-2])$/.test(wellId)) {
-        errors.push(`Invalid Well ID at line ${i + 1}: ${wellIdRaw}`)
+        setErrors(prev => [...prev, `Invalid Well ID at line ${i + 1}: ${wellIdRaw}`])
         continue
       }
       
       if (line.length < 2) {
-        errors.push(`No data for well ${wellId} at line ${i + 1}`)
+        setErrors(prev => [...prev, `No data for well ${wellId} at line ${i + 1}`])
         continue
       }
       
@@ -56,27 +58,109 @@ export const PasteTable: React.FC = () => {
         return isNaN(num) ? 0 : num
       })
 
-      // 检查数据点数量是否匹配预期
-      if (values.length !== endTime) {
-        errors.push(`Well ${wellId} has ${values.length} data points, expected ${endTime} (time range: 0-${endTime - 1} minutes)`)
-        continue
-      }
+      console.log(`Well ${wellId}: raw data has ${values.length} points, first few values:`, values.slice(0, 5))
 
-      wells.push({
-        wellId,
-        timePoints: values
-      })
+      // 检查数据点数量是否足够
+      if (values.length < endTime) {
+        console.log(`Well ${wellId}: expected ${endTime} points, got ${values.length} points, padding with zeros`)
+        // 用0填充到所需长度，但保留原有数据
+        const paddedValues = [...values]
+        while (paddedValues.length < endTime) {
+          paddedValues.push(0)
+        }
+        console.log(`Well ${wellId}: after padding, has ${paddedValues.length} points`)
+        wells.push({
+          wellId,
+          timePoints: paddedValues
+        })
+      } else {
+        // 数据足够，只取前endTime个数据点
+        const truncatedValues = values.slice(0, endTime)
+        console.log(`Well ${wellId}: data sufficient, truncated to ${truncatedValues.length} points`)
+        wells.push({
+          wellId,
+          timePoints: truncatedValues
+        })
+      }
     }
     
-    if (errors.length > 0) {
-      throw new Error(errors.join('; '))
+    console.log('parseCSVData: processed', wells.length, 'wells, each with', wells[0]?.timePoints.length, 'time points')
+    
+    if (setErrors.length > 0) {
+      throw new Error(setErrors.join('; '))
     }
     return wells
-  }, [timeRange])
+  }, [timeRange, setErrors])
+
+  // 当timeRange改变时，重新处理原始数据
+  useEffect(() => {
+    if (originalData && originalData.trim()) {
+      console.log('Time range changed, reprocessing data with timeRange:', timeRange)
+      try {
+        // 直接在这里处理数据，而不是调用parseCSVData，避免依赖项问题
+        const lines = originalData.trim().split('\n')
+        const endTime = timeRange[1]
+        console.log('Reprocessing with endTime:', endTime)
+        
+        const wells: WellData[] = []
+        
+        for (let i = 0; i < lines.length && i < 96; i++) {
+          const line = lines[i].split(/[\s,，\t]+/).map(s => s.trim())
+          const wellIdRaw = line[0]
+          
+          if (!wellIdRaw) continue
+          
+          let wellId = wellIdRaw
+          if (/^[A-H]0[1-9]$/.test(wellIdRaw)) {
+            wellId = wellIdRaw.charAt(0) + wellIdRaw.slice(2)
+          }
+          if (/^[A-H](0?[1-9]|1[0-2])$/.test(wellId)) {
+            wellId = wellId.charAt(0) + String(Number(wellId.slice(1)))
+          }
+          wellId = wellId.charAt(0) + String(Number(wellId.slice(1)))
+          
+          if (!/^[A-H](?:[1-9]|1[0-2])$/.test(wellId)) continue
+          if (line.length < 2) continue
+          
+          const values = line.slice(1).map(val => {
+            const num = parseFloat(val)
+            return isNaN(num) ? 0 : num
+          })
+
+          console.log(`Reprocessing Well ${wellId}: raw data has ${values.length} points`)
+
+          if (values.length < endTime) {
+            console.log(`Well ${wellId}: padding from ${values.length} to ${endTime} points`)
+            const paddedValues = [...values]
+            while (paddedValues.length < endTime) {
+              paddedValues.push(0)
+            }
+            wells.push({ wellId, timePoints: paddedValues })
+          } else {
+            console.log(`Well ${wellId}: truncating from ${values.length} to ${endTime} points`)
+            const truncatedValues = values.slice(0, endTime)
+            wells.push({ wellId, timePoints: truncatedValues })
+          }
+        }
+        
+        console.log('Reprocessed data:', wells.length, 'wells with', wells[0]?.timePoints.length, 'time points')
+        setRawData(wells)
+        setSelectedWells(new Set(wells.map(w => w.wellId)))
+        setErrors([])
+      } catch (error) {
+        console.log('Error reprocessing data:', error)
+        setRawData([])
+        setSelectedWells(new Set())
+        setErrors([error instanceof Error ? error.message : 'Invalid CSV format. Please check your data.'])
+      }
+    }
+  }, [timeRange, originalData, setRawData, setSelectedWells, setErrors])
 
   const handlePaste = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value
     setPasteText(text)
+    setOriginalData(text) // 存储原始数据
+    
     try {
       const wells = parseCSVData(text)
       console.log('wells to setRawData:', wells)
@@ -108,6 +192,7 @@ export const PasteTable: React.FC = () => {
       const wells = await parseExcel(file, timeRange)
       const text = wells.map(w => [w.wellId, ...w.timePoints].join(',')).join('\n')
       setPasteText(text)
+      setOriginalData(text) // 存储原始数据
       const parsed = parseCSVData(text)
       setRawData(parsed)
       setSelectedWells(new Set(parsed.map(w => w.wellId)))
@@ -122,6 +207,7 @@ export const PasteTable: React.FC = () => {
 
   const handleClear = useCallback(() => {
     setPasteText('')
+    setOriginalData('')
     setRawData([])
     setSelectedWells(new Set())
     setErrors([])
