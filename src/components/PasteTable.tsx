@@ -20,7 +20,6 @@ export const PasteTable: React.FC = () => {
 
     // Parse data rows
     const wells: WellData[] = []
-    const errors: string[] = []
     
     for (let i = 0; i < lines.length && i < 96; i++) {
       // 支持多分隔符
@@ -28,7 +27,7 @@ export const PasteTable: React.FC = () => {
       const wellIdRaw = line[0]
       
       if (!wellIdRaw) {
-        errors.push(`Empty well ID at line ${i + 1}`)
+        setErrors(prev => [...prev, `Empty well ID at line ${i + 1}`])
         continue
       }
 
@@ -45,12 +44,12 @@ export const PasteTable: React.FC = () => {
       wellId = wellId.charAt(0) + String(Number(wellId.slice(1)))
       
       if (!/^[A-H](?:[1-9]|1[0-2])$/.test(wellId)) {
-        errors.push(`Invalid Well ID at line ${i + 1}: ${wellIdRaw}`)
+        setErrors(prev => [...prev, `Invalid Well ID at line ${i + 1}: ${wellIdRaw}`])
         continue
       }
       
       if (line.length < 2) {
-        errors.push(`No data for well ${wellId} at line ${i + 1}`)
+        setErrors(prev => [...prev, `No data for well ${wellId} at line ${i + 1}`])
         continue
       }
       
@@ -87,11 +86,11 @@ export const PasteTable: React.FC = () => {
     
     console.log('parseCSVData: processed', wells.length, 'wells, each with', wells[0]?.timePoints.length, 'time points')
     
-    if (errors.length > 0) {
-      throw new Error(errors.join('; '))
+    if (setErrors.length > 0) {
+      throw new Error(setErrors.join('; '))
     }
     return wells
-  }, [timeRange])
+  }, [timeRange, setErrors])
 
   // 当timeRange改变时，重新处理原始数据
   useEffect(() => {
@@ -104,7 +103,6 @@ export const PasteTable: React.FC = () => {
         console.log('Reprocessing with endTime:', endTime)
         
         const wells: WellData[] = []
-        const errors: string[] = []
         
         for (let i = 0; i < lines.length && i < 96; i++) {
           const line = lines[i].split(/[\s,，\t]+/).map(s => s.trim())
@@ -156,7 +154,7 @@ export const PasteTable: React.FC = () => {
         setErrors([error instanceof Error ? error.message : 'Invalid CSV format. Please check your data.'])
       }
     }
-  }, [timeRange, originalData]) // 添加originalData作为依赖项
+  }, [timeRange, originalData, setRawData, setSelectedWells, setErrors])
 
   const handlePaste = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value

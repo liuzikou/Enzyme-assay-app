@@ -33,7 +33,6 @@ export function parseExcel(file: File, timeRange: [number, number]): Promise<Wel
         if (totalMinutes < end) {
           console.log(`Excel file contains ${totalMinutes} minutes, but time range requires ${end} minutes. Using available data.`)
         }
-        const selectedCols = header.slice(0, Math.min(end, totalMinutes))
         const dataRows = trimmed.slice(1)
         const wells: WellData[] = []
         for (const row of dataRows) {
