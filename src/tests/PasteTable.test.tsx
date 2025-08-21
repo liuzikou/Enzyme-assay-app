@@ -42,7 +42,7 @@ describe('PasteTable', () => {
       expect(callArg).toEqual([
         {
           wellId: 'A1',
-          timePoints: Array.from({ length: 30 }, (_, i) => i + 1)
+          timePoints: [...Array.from({ length: 29 }, (_, i) => i + 1), 0] // 29个数据点 + 1个0填充
         }
       ])
       expect(mockSetErrors).toHaveBeenCalledWith([])
@@ -65,7 +65,7 @@ describe('PasteTable', () => {
       expect(callArg).toEqual([
         {
           wellId: 'A1', // 应该转换为A1格式
-          timePoints: Array.from({ length: 30 }, (_, i) => i + 1)
+          timePoints: [...Array.from({ length: 29 }, (_, i) => i + 1), 0] // 29个数据点 + 1个0填充
         }
       ])
       expect(mockSetErrors).toHaveBeenCalledWith([])
@@ -80,9 +80,15 @@ describe('PasteTable', () => {
     
     fireEvent.change(textarea, { target: { value: testData } })
     
-    expect(mockSetErrors).toHaveBeenCalledWith([
-      expect.stringContaining('has 3 data points, expected 30')
+    expect(mockSetRawData).toHaveBeenCalled()
+    const callArg = mockSetRawData.mock.calls[0][0]
+    expect(callArg).toEqual([
+      {
+        wellId: 'A1',
+        timePoints: [1, 2, 3, ...Array.from({ length: 27 }, () => 0)] // 3个数据点 + 27个0填充
+      }
     ])
+    expect(mockSetErrors).toHaveBeenCalledWith([])
   })
 
   it('rejects invalid well ID formats', () => {
