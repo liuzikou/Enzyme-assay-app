@@ -31,20 +31,29 @@ export function parseExcel(file: File, timeRange: [number, number]): Promise<Wel
         const header = trimmed[0].slice(0).map(v => String(v))
         const totalMinutes = header.length
         if (totalMinutes < end) {
-          reject(new Error(`Excel file only contains ${totalMinutes} minutes of data`))
-          return
+          console.log(`Excel file contains ${totalMinutes} minutes, but time range requires ${end} minutes. Using available data.`)
         }
-        const selectedCols = header.slice(0, end)
+        const selectedCols = header.slice(0, Math.min(end, totalMinutes))
         const dataRows = trimmed.slice(1)
         const wells: WellData[] = []
         for (const row of dataRows) {
           const wellId = String(row[0]).trim()
-          const values = row.slice(1, 1 + selectedCols.length).map(v => {
+          const availableValues = row.slice(1, 1 + totalMinutes).map(v => {
             const num = parseFloat(String(v))
             return isNaN(num) ? 0 : num
           })
-          if (values.length === selectedCols.length && wellId) {
-            wells.push({ wellId, timePoints: values })
+          
+          // 如果数据点不足，用0填充到所需长度
+          const values = [...availableValues]
+          while (values.length < end) {
+            values.push(0)
+          }
+          
+          // 只取前end个数据点
+          const truncatedValues = values.slice(0, end)
+          
+          if (truncatedValues.length === end && wellId) {
+            wells.push({ wellId, timePoints: truncatedValues })
           }
         }
         resolve(wells)

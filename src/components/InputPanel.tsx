@@ -41,8 +41,8 @@ export const InputPanel: React.FC = () => {
   const handleCombinedWellToggle = (wellId: string) => {
     // Handle well selection based on current mode
     if (wellSelectionMode === 'sample') {
-      // For assays that use control wells, remove from control wells if present
-      if (assayType === 'S2251' || assayType === 'HoFF') {
+      // For HoFF assay, remove from control wells if present
+      if (assayType === 'HoFF') {
         if (control0Wells.has(wellId)) {
           const newControl0 = new Set(control0Wells)
           newControl0.delete(wellId)
@@ -62,7 +62,7 @@ export const InputPanel: React.FC = () => {
         newSelected.add(wellId)
       }
       setSelectedWells(newSelected)
-    } else if (wellSelectionMode === 'control0' && (assayType === 'S2251' || assayType === 'HoFF')) {
+    } else if (wellSelectionMode === 'control0' && assayType === 'HoFF') {
       // Remove from control100 if present
       if (control100Wells.has(wellId)) {
         const newControl100 = new Set(control100Wells)
@@ -115,13 +115,15 @@ export const InputPanel: React.FC = () => {
           onChange={(e) => setAssayType(e.target.value as AssayType)}
           className="input-field"
         >
-          <option value="T2943">tPA catalytic rate</option>
-          <option value="S2251">Plasmin generation rate</option>
           <option value="HoFF">Fibrinolysis: HoFF test</option>
+          <option value="T2943">tPA activity assay</option>
         </select>
       </div>
 
-
+      {/* Data Input */}
+      <div>
+        <PasteTable />
+      </div>
 
       {/* Parameters */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -166,13 +168,6 @@ export const InputPanel: React.FC = () => {
         </div>
       </div>
 
-
-
-      {/* Data Input */}
-      <div>
-        <PasteTable />
-      </div>
-
       {/* Well Selection - Combined with Control Wells */}
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -202,8 +197,8 @@ export const InputPanel: React.FC = () => {
               </div>
             )}
             
-            {/* For S2251 and HoFF: Combined selection with control wells */}
-            {(assayType === 'S2251' || assayType === 'HoFF') && (
+            {/* For HoFF: Combined selection with control wells */}
+            {assayType === 'HoFF' && (
               <>
                 {/* Selection Mode Buttons */}
                 <div className="flex flex-wrap gap-2">
@@ -227,18 +222,16 @@ export const InputPanel: React.FC = () => {
                   >
                     0% Control
                   </button>
-                  {assayType === 'HoFF' && (
-                    <button
-                      onClick={() => setWellSelectionMode('control100')}
-                      className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
-                        wellSelectionMode === 'control100'
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      100% Control
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setWellSelectionMode('control100')}
+                    className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                      wellSelectionMode === 'control100'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    100% Control
+                  </button>
                 </div>
                 
                 {/* Well Grid */}
@@ -271,14 +264,14 @@ export const InputPanel: React.FC = () => {
         
         {/* HoFF Output Metric Selection */}
         {assayType === 'HoFF' && (
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">
+          <div className="flex items-center space-x-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <label className="text-sm font-semibold text-blue-800">
               Output Metric:
             </label>
             <select
               value={hoffMetric}
               onChange={(e) => setHoffMetric(e.target.value as HoFFMetric)}
-              className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+              className="text-sm border border-blue-300 rounded px-3 py-2 bg-white text-blue-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="HLT">Half Lysis Time (HLT)</option>
               <option value="MLR">Max Lysis Rate (MLR)</option>
