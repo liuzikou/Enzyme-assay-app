@@ -20,14 +20,26 @@ function createWorkbook(minutes: number) {
 }
 
 describe('parseExcel', () => {
-  it('throws when Excel does not contain enough data', async () => {
+  it('fills missing data with zeros when Excel does not contain enough data', async () => {
     const file = createWorkbook(30)
-    await expect(parseExcel(file, [0, 60])).rejects.toThrow()
+    const result = await parseExcel(file, [0, 60])
+    
+    // 找到A01行的数据
+    const a01Data = result.find(well => well.wellId === 'A01')
+    expect(a01Data).toBeDefined()
+    expect(a01Data!.timePoints.length).toBe(60)
+    
+    // 前30个数据点应该是原始数据
+    expect(a01Data!.timePoints.slice(0, 30)).toEqual(Array.from({ length: 30 }, (_, i) => i + 0.1))
+    // 后30个数据点应该是0填充
+    expect(a01Data!.timePoints.slice(30)).toEqual(Array.from({ length: 30 }, () => 0))
   })
 
   it('parses and trims time points', async () => {
     const file = createWorkbook(30)
     const result = await parseExcel(file, [0, 30])
-    expect(result[0].timePoints.length).toBe(30)
+    const a01Data = result.find(well => well.wellId === 'A01')
+    expect(a01Data).toBeDefined()
+    expect(a01Data!.timePoints.length).toBe(30)
   })
 })
