@@ -20,6 +20,7 @@ export const PasteTable: React.FC = () => {
 
     // Parse data rows
     const wells: WellData[] = []
+    const errors: string[] = []
     
     for (let i = 0; i < lines.length && i < 96; i++) {
       // 支持多分隔符
@@ -27,7 +28,7 @@ export const PasteTable: React.FC = () => {
       const wellIdRaw = line[0]
       
       if (!wellIdRaw) {
-        setErrors(prev => [...prev, `Empty well ID at line ${i + 1}`])
+        errors.push(`Empty well ID at line ${i + 1}`)
         continue
       }
 
@@ -44,12 +45,12 @@ export const PasteTable: React.FC = () => {
       wellId = wellId.charAt(0) + String(Number(wellId.slice(1)))
       
       if (!/^[A-H](?:[1-9]|1[0-2])$/.test(wellId)) {
-        setErrors(prev => [...prev, `Invalid Well ID at line ${i + 1}: ${wellIdRaw}`])
+        errors.push(`Invalid Well ID at line ${i + 1}: ${wellIdRaw}`)
         continue
       }
       
       if (line.length < 2) {
-        setErrors(prev => [...prev, `No data for well ${wellId} at line ${i + 1}`])
+        errors.push(`No data for well ${wellId} at line ${i + 1}`)
         continue
       }
       
@@ -86,11 +87,11 @@ export const PasteTable: React.FC = () => {
     
     console.log('parseCSVData: processed', wells.length, 'wells, each with', wells[0]?.timePoints.length, 'time points')
     
-    if (setErrors.length > 0) {
-      throw new Error(setErrors.join('; '))
+    if (errors.length > 0) {
+      throw new Error(errors.join('; '))
     }
     return wells
-  }, [timeRange, setErrors])
+  }, [timeRange])
 
   // 当timeRange改变时，重新处理原始数据
   useEffect(() => {

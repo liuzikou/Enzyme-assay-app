@@ -503,11 +503,13 @@ export function calcHoFF(options: {
   const tmlr = rawTmlrIndex >= 0 ? rawTmlrIndex + 1 : -1
   const fi = tmlr > 0 ? mlr / tmlr : 0
   
+  // Calculate HLT result
+  const hltResult = hlt >= 0 ? hlt : (totalDuration || norm.length)
+  
   switch (metric) {
     case 'HLT':
       // If 50% is never reached, return the total experiment time
       // Use totalDuration if provided, otherwise use data length
-      const hltResult = hlt >= 0 ? hlt : (totalDuration || norm.length)
       console.log(`HLT calculation: hlt=${hlt}, norm.length=${norm.length}, totalDuration=${totalDuration}, result=${hltResult}`)
       return hltResult
     case 'MLR':
